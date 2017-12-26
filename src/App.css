@@ -1,0 +1,173 @@
+.Header {
+    width: 90%;
+    margin-left: 5%;
+    margin-right: 5%;
+}
+.Header button {
+    margin-top: 2%;
+}
+button {
+    -moz-box-shadow:    3px 3px 3px #ccc;
+    -webkit-box-shadow: 3px 3px 3px #ccc;
+    box-shadow:         3px 3px 3px #ccc;
+}
+.Portfolio_container {
+}
+
+.Portfolio {
+    position: relative;
+    min-height: 20em;
+    max-width: 98%;
+    float: left;
+    display: table-cell;
+
+    margin-top: 2%;
+    margin-bottom: 20px; /*To ensure the gap doesn't get tiny*/
+    margin-left: 5%;
+
+    border: 2px solid black;
+
+    -moz-box-shadow: 3px 3px 3px #ccc;
+    -webkit-box-shadow: 3px 3px 3px #ccc;
+    box-shadow: 3px 3px 3px #ccc;
+}
+
+.Portfolio-inner {
+    width: 96%;
+    margin-left: 2%;
+    margin-right: 2%;
+ }
+
+
+.Portfolio-header button{
+    position: relative;
+    cursor: pointer;
+    margin: 1%;
+}
+
+.Portfolio-title {
+    font-size: 1.2em;
+}
+
+/* I want this position to be absolute so that I can put relative on the deleteButton
+ * and have it at the top right at all times
+.Portfolio-header {
+    position: absolute;
+    margin-bottom: 2em;
+}
+*/
+.Portfolio-header-deleteButton{
+    position: absolute;
+    float: right;
+    z-index: 2;
+    top: 2%;
+    right: 2%;
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 50%;
+    border: 1px solid black;
+}
+
+.Portfolio-header-showEuro{
+    border: none;
+    background: none;
+}
+
+.Portfolio-header-showDollar{
+    border: none;
+    background: none;
+ }
+
+.Portfolio-footer {
+    width: 100%;
+    bottom: 0;
+}
+
+.Portfolio-footer p{
+    font-size: 1em;
+}
+.Portfolio-footer button{
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 1%;
+}
+
+.Portfolio-footer-addStockButton {
+    float: left;
+}
+
+.Portfolio-footer-removeStockButton{
+    float: right;
+    margin-left: 20%;
+}
+
+.Portfolio-content {
+    margin-top: 1.5em;
+    min-height: 11em;
+    max-height: 12em;
+}
+
+.Table-label img{
+    cursor: pointer;
+    position: relative;
+    height: 1em;
+    margin-left: 5%;
+    margin-top: 5%;
+ }
+
+.Table-header {
+    background-color: lightpink;
+    margin-top: 1em;
+    margin-bottom: -1.5em;
+}
+/*
+adding some comments lol
+th {
+    background-color: lightpink;
+    font-size: 0.9em;
+}
+table {
+    table-layout:fixed;
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 250px;
+    border: 1px solid #ddd;
+}
+th, td {
+    text-align: left;
+    padding: 0.2em;
+}
+*/
+table {
+    width: 96% !important;
+    table-layout:fixed;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin:auto;
+    border: 1px solid #ddd;
+    background-color: lightpink;
+}
+th {
+    font-size: 0.9em;
+}
+th, td {
+    padding: 1% 2%;
+}
+thead{
+    display: table;
+    width: calc(100% - 18px);
+}
+tbody {
+    background-color: white;
+    max-height: 10em;
+    overflow: auto;
+    display: block;
+}
+tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+tr:nth-child(even){background-color: #d3d3d3}
