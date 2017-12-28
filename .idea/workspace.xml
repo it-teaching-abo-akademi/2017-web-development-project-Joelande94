@@ -61,8 +61,8 @@
       <file leaf-file-name="App.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/App.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="748">
-              <caret line="106" column="45" lean-forward="true" selection-start-line="106" selection-start-column="45" selection-end-line="106" selection-end-column="45" />
+            <state relative-caret-position="571">
+              <caret line="296" column="0" lean-forward="true" selection-start-line="296" selection-start-column="0" selection-end-line="296" selection-end-column="0" />
               <folding>
                 <element signature="e#0#41#0" expanded="true" />
               </folding>
@@ -82,6 +82,12 @@
       <find>&lt;Stock</find>
       <find>getTotal</find>
       <find>this.state.key</find>
+      <find>updateLocalStorage</find>
+      <find>got the data</find>
+      <find>this.saveCh</find>
+      <find>this.state.stocks</find>
+      <find>totalValue</find>
+      <find>state.totalValue</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -140,11 +146,6 @@
             <path>
               <item name="stock-manager" type="b2602c69:ProjectViewProjectNode" />
               <item name="stock-manager" type="462c0819:PsiDirectoryNode" />
-              <item name="public" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="stock-manager" type="b2602c69:ProjectViewProjectNode" />
-              <item name="stock-manager" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
@@ -191,12 +192,12 @@
       <workItem from="1513456939373" duration="37617000" />
       <workItem from="1513956013118" duration="22514000" />
       <workItem from="1514203975925" duration="52790000" />
-      <workItem from="1514465329096" duration="14178000" />
+      <workItem from="1514465329096" duration="24401000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="138489000" />
+    <option name="totallyTimeSpent" value="148712000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -209,7 +210,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-9" y="-9" width="1938" height="1048" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13643575" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295325" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -482,8 +482,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/App.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="748">
-          <caret line="106" column="45" lean-forward="true" selection-start-line="106" selection-start-column="45" selection-end-line="106" selection-end-column="45" />
+        <state relative-caret-position="571">
+          <caret line="296" column="0" lean-forward="true" selection-start-line="296" selection-start-column="0" selection-end-line="296" selection-end-column="0" />
           <folding>
             <element signature="e#0#41#0" expanded="true" />
           </folding>

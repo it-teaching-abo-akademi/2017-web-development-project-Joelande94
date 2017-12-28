@@ -13,6 +13,8 @@ let euroValue = undefined;
 let test = undefined;
 getEuroValue();
 
+//HOLY SPIRIT OF REACT -> INFORMATION FLOWS UP. NEVER FETCH. <- Lawyer up, delete facebook, hit the gym.
+
 /**Todo list
  * Make it reacty (Store everything as great big giant JSON which apparently is very smart and clever according to react)
  * Currency switcher doesn't work inside the table. Only on total value.
@@ -33,14 +35,31 @@ getEuroValue();
  * Enable cryptos.
  * Slide portfolio up and leave only bar to be able to slide it down again.
  *
- * Todo dun did
+ * ** Specifications ** *
+ * Todo make it reacty
+ * In App:
+ *      portfolios is to be a JSON object of all portfolios
+ *      Any changes made in each portfolio triggers callBack function of App with the new JSON portfolio (id/key will be used for identification)
+ *
+ * In Portfolio:
+ *      stocks is to be a JSON object of all stocks in this portfolio
+ *      Any changes made in each stock triggers callBack function of Portfolio with the new JSON stock stocks[id] = newStock
+ *
+ * Thoughts:
+ *      When recreating page from localStorage: when creating a portfolio, pass info of stocks down when creating it and move on to next portfolio
+ *      In constructor of portfolio and portfolio's "this" exists, you can then pass the functions you need to create the stocks.
+ *
+ * Todo dun did [NOT FOR REACTY THOUGH :,( ]
  * Add portfolio
  * Add stock
  * Total value is currently NaN€ instead of 0€*
  * Remove selected stock. [Idea: whenever checkbox is changed call callback function from portfolio to add/remove
  *                         it from a list. Then if remove selected is pressed, remove all stocks with keys in the list.]
  * Remove portfolio
+ *
  */
+
+
 
 
 
@@ -48,12 +67,14 @@ class App extends Component {
     constructor(props){
         super(props);
         let portfolios = [];
+        let jsPortfolios = {};
+        /*
         if(storageAvailable("localStorage")){
             //Check if there are any juicy localstorage portfolios
             if(localStorage.portfolios !== undefined){
                 let temp = JSON.parse(localStorage.portfolios);
                 Object.keys(temp).forEach(function(key){
-                    let portfolio = <Portfolio key={(temp[key].key)} name={(temp[key]['props'].name)} callback={this.updateLocalStorage.bind(this)}/>;
+                    let portfolio = <Portfolio key={(temp[key].key)} name={(temp[key]['props'].name)}/>;
                     let stocks = temp[key]['stocks'];
                     portfolios.push(portfolio);
                 }.bind(this));
@@ -68,73 +89,46 @@ class App extends Component {
         }else{
             alert("Yo browsa so old, she don't even support local storage.");
         }
+        */
         this.state = {
-            portfolios: portfolios
+            portfolios: portfolios,
+            jsPortfolios: jsPortfolios
         }
     }
     updateLocalStorage(){
-        console.log("Update local storage");
-        console.log(JSON.stringify(this.props.children));
-
-        localStorage.clear();
-        console.log("Update local storage");
-
-        let portfolios = {};
-        this.state.portfolios.forEach(function(portfolio){
-            //Turn each portfolio into json object and pass it to portfolios
-            let portfolioToSave = {};
-            let stocks = portfolio.state.stocks;
-            stocks.forEach(function(stock){
-                //Turn each stock into json object and pass it to portfolioToSave
-                //We're only interested in saving the following info since the rest can be calculated from this info
-                //or can't be stored as json.
-                let jsonStock = {
-                    id: stock.props.id,
-                    name: stock.props.name,
-                    unit_value: stock.props.unit_value,
-                    quantity: stock.props.quantity
-                };
-                /* Todo
-                    Since we can't store these two as a json we need to remember to set them when importing
-                    updateSelected: stock.props.updateSelected,
-                    getcurrency: stock.props.getcurrency,
-                * */
-                portfolioToSave[stock.props.id] = jsonStock;
-            });
-            portfolios[portfolio.props.id] = portfolioToSave;
-
-        });
-        localStorage.portfolios = portfolios;
+        //This will probably be useless after Reactyfying
+        console.log("Saving to local storage");
+        let jsPortfolios = this.state.jsPortfolios;
+        localStorage.portfolios = jsPortfolios;
     }
 
     deletePortfolio(key){
-        //Delete the portfolio whose [X] was just clicked. The portfolio has the key that's provided.
-        let portfolios = this.state.portfolios;
-        portfolios.forEach(function(portfolio){
-            if(portfolio.key === key){
-                let index = portfolios.indexOf(portfolio);
-                portfolios.splice(index, 1);
-            }
-        });
-        this.updatePortfolios(portfolios);
-    }
-    updatePortfolios(portfolios){
-        this.setState({
-            portfolios: portfolios
-        });
+        //Delete the portfolio whose [X] button was just clicked.
+        let state = this.state;
+        let jsPortfolios = this.state.jsPortfolios;
+        delete jsPortfolios[key];
+        state.jsPortfolios = jsPortfolios;
+        this.setState(state);
     }
 
+    updatePortfolio(portfolio){
+        let state = this.state;
+        state.jsPortfolios[portfolio.id] = portfolio;
+        this.setState(state);
+    }
 
-    addPortfolio(e){
+    addPortfolio(){
         var name = prompt("Pick a name for the portfolio.");
         if(name === null || name.trim() === ""){
             alert("The name cannot be empty.");
         }else{
             //Get current list of portfolios, push this new portfolio to it and update the state and local storage.
             let portfolios = this.state.portfolios;
+            let state = this.state;
             let id = guid();
-            portfolios.push(<Portfolio key={id} id={id} name={name} callback={this.updateLocalStorage.bind(this)} deletePortfolio={this.deletePortfolio.bind(this)}/>);
-            this.updatePortfolios(portfolios);
+            portfolios.push(<Portfolio key={id} id={id} name={name} updatePortfolio={this.updatePortfolio.bind(this)} deletePortfolio={this.deletePortfolio.bind(this)}/>);
+            state.portfolios = portfolios;
+            this.setState(state);
             this.updateLocalStorage();
         }
     }
@@ -152,36 +146,48 @@ class App extends Component {
     }
 }
 class Portfolio extends Component {
-    saveChange = undefined;
+    updatePortfolio = undefined;
     deleteThis = undefined;
     constructor(props){
         super(props);
-        this.saveChange = this.props.callback;
         this.deleteThis = this.props.deletePortfolio;
-        this.stocks = [];
+        this.updatePortfolio = this.props.updatePortfolio;
+        let jsStocks = {};
         this.state = {
             currency: currency,
             id: this.props.id,
-            stocks: this.stocks,
-            totalValue: 0.0,
+            jsStocks: jsStocks,
+            total_value: 0.0,
             selected: []
         };
-        this.saveChange();
     }
-    getStocks(){
-        return this.state.stocks;
-    }
+
     addStock(){
         //This function takes the input and tries to fetch the data of that stock symbol.
         let input = prompt("Enter the stock's symbol and how many you have. e.g. \"MSFT, 10\"");
-        //input = "MSFT, 13".split(",");
+        let symbol = "";
+        let quantity = 0;
         if(input === null || input.trim() === ""){
             //alert("The symbol cannot be empty.");
             input = ("MSFT, 13").split(",");
+            symbol = input[0].trim();
+            quantity = input[1].trim();
         }else {
-            input = input.split(",");
+            let splitInput = input.split(",");
+            if(splitInput[0].trim() === input.trim()){
+                symbol = splitInput.trim();
+                quantity = 1;
+            }else{
+                symbol = splitInput[0].trim();
+                quantity = splitInput[1].trim();
+            }
         }
-        getStockData(this.addStock2.bind(this), input[0].trim(), input[1].trim());
+        try{
+            parseFloat(quantity);
+            getStockData(this.addStock2.bind(this), symbol, quantity);
+        }catch(e){
+            alert("That's not a valid input");
+        }
     }
     addStock2(jsonObj, quantity){
         //The callback function of the request.
@@ -190,18 +196,29 @@ class Portfolio extends Component {
         if(Object.keys(jsonObj)[0] === "Error Message"){
             alert("Could not find a stock with that symbol. Double check and try again.");
         }else{
+            let state = this.state;
             let name = Object.values(jsonObj['Meta Data'])[1]; //The symbol
             let firstVal = Object.values(jsonObj['Time Series (1min)'])[0]; //First row of the time series
             let latestClose = firstVal['4. close']; //The close value of the first row (most recent)
-            let oldValue = this.state.totalValue;
-            let stocks = this.state.stocks;
+            let oldValue = state.total_value;
             let id = guid();
-            let stock = <Stock key={id} id={id} name={name} unit_value={latestClose} quantity={quantity} />;
             let newTotalValue = (parseFloat(oldValue) + parseFloat(latestClose)*parseFloat(quantity)).toFixed(2);
 
-            stocks.push(stock);
-            this.updateStocks(stocks, newTotalValue);
-            this.saveChange();
+            //Reacty part. The <Stock /> still needs to be created but only when showing.
+            let jsStocks = state.jsStocks;
+            jsStocks[id] = {
+                id: id,
+                name: name,
+                unit_value: latestClose,
+                quantity: quantity
+            };
+            state.jsStocks = jsStocks;
+            this.setState(jsStocks);
+            //Since we now changed this Portfolio we need to pass the information up!
+            //TODO pass the information up!
+            //callBackFunction();
+            //end of Reacty part.
+            this.updateToShow();
         }
     }
     perfGraph(){
@@ -222,62 +239,90 @@ class Portfolio extends Component {
     updateCurrency(currency){
         let state = this.state;
         state.currency = currency;
-        this.setState(state)
+        this.setState(state);
         this.updateToShow();
     }
     updateStocks(stocks, newTotalValue){
         console.log("1Setting total value to: ", newTotalValue);
         let state = this.state;
         state.stocks = stocks;
-        state.totalValue = newTotalValue;
+        state.total_value = newTotalValue;
 
         this.setState(state);
         this.updateToShow();
     }
     updateToShow(){
-        let stocks = this.state.stocks;
+        let stocks = this.state.jsStocks;
         let totalValue = this.getTotalValue(stocks);
-        console.log("Update to show totalValue: " + totalValue);
         let showStocks = [];
         let getcurr = this.getCurrency.bind(this);
         let updateSelected = this.setSelected.bind(this);
         if(this.state.currency === "euro"){
             totalValue = (totalValue * euroValue).toFixed(2);
-            //This is really REALLY ugly but I had to change it half-way and it was the only way I could make it work (fast enough).
-            //I never actually show the first <Stock />s I make, I only show these new ones. :(
-            stocks.forEach(function(stock){
-                let id = stock.key;
+            Object.keys(stocks).forEach(function(key){
+                let stock = stocks[key];
+                let id = stock.id;
                 showStocks.push(<Stock
                     updateSelected={updateSelected}
                     getcurrency={getcurr}
                     key={id}
                     id={id}
-                    name={stock.props.name}
-                    unit_value={(stock.props.unit_value*euroValue).toFixed(2)}
-                    quantity={stock.props.quantity} />);
+                    name={stock.name}
+                    unit_value={(stock.unit_value*euroValue).toFixed(2)}
+                    quantity={stock.quantity} />);
             });
             console.log("showing as euros");
         }else{
             totalValue = totalValue.toFixed(2);
-            showStocks = stocks;
+            Object.keys(stocks).forEach(function(key){
+                let stock = stocks[key];
+                let id = stock.id;
+                showStocks.push(<Stock
+                    updateSelected={updateSelected}
+                    getcurrency={getcurr}
+                    key={id}
+                    id={id}
+                    name={stock.name}
+                    unit_value={(parseFloat(stock.unit_value)).toFixed(2)}
+                    quantity={stock.quantity} />);
+            });
             console.log("showing as dollars");
+            console.log("Update to show totalValue: " + totalValue);
         }
         //Update state
         let state = this.state;
         state.showStocks = showStocks;
-        state.totalValue = totalValue;
+        state.total_value = totalValue;
         this.setState(state);
+
+        //Since this is the last stop for all modifying functions in this class we pass the change up at this point.
+        this.passItUp();
+    }
+
+    /**
+     * Call this whenever a change occurs to pass that info up so the big boss is aware of it.
+     */
+    passItUp(){
+        let state = this.state;
+        let save = {
+            id: state.id,
+            currency: state.currency,
+            stocks: state.stocks,
+            total_value: state.total_value,
+        }
+        this.updatePortfolio(save);
     }
     getCurrency(){
         console.log("getCurrency");
         return this.state.currency;
     }
-    getTotalValue(stocks){
+    getTotalValue(){
         console.log("Getting total value");
         let totalValue = 0;
-        stocks.forEach(function(stock){
-            totalValue += parseFloat(stock.props.quantity)*parseFloat(stock.props.unit_value);
-            console.log(totalValue);
+        let stocks = this.state.jsStocks;
+        Object.keys(stocks).forEach(function(key){
+            let current = stocks[key];
+            totalValue += parseFloat(current.quantity)*parseFloat(current.unit_value);
         });
         return totalValue;
     }
@@ -305,23 +350,21 @@ class Portfolio extends Component {
     //Removes all stocks that are in the list of selected stocks
     removeSelected(){
         console.log("Removing stock!");
-        let stocks = this.state.stocks;
+        let jsStocks = this.state.jsStocks;
         let selected = this.state.selected;
         selected.forEach(function(key){
-            stocks.forEach(function(stock){
-                if(stock.props.id === key){
-                    stocks.splice(stocks.indexOf(stock), 1);
-                }
-            });
+            //Reacty part
+            delete jsStocks[key];
         });
-        this.updateStocks(stocks, this.getTotalValue(stocks));
-        this.saveChange();
+        this.updateStocks(jsStocks, this.getTotalValue(jsStocks));
     }
     render() {
         let currencySymbol = dollarSymbol;
         if(this.state.currency === "euro"){
             currencySymbol = euroSymbol;
         }
+        console.log("Drawing showstocks: ");
+        console.log(this.state.showStocks);
         return (
             <div className="Portfolio col- col-5 col-m-11">
                 <div className="Portfolio-inner">
@@ -359,7 +402,7 @@ class Portfolio extends Component {
                     </div>
                     <div className="Portfolio-footer">
                         <p>
-                            Total value: <label className="totalPortfolioValue">{this.state.totalValue}{currencySymbol}</label>
+                            Total value: <label className="totalPortfolioValue">{this.state.total_value}{currencySymbol}</label>
                         </p>
                         <Button function={this.addStock.bind(this)} className="Portfolio-footer-addStockButton" label="Add stock"/>
                         <Button function={this.perfGraph.bind(this)} className="Portfolio-footer-perfGraphButton" label="Perf. graph"/>
@@ -405,7 +448,7 @@ class Stock extends Component{
         //console.log(this.state.getcurrency());
         return(
             <tr>
-                <td>{this.state.name}</td>
+                <td>{this.state.name.toUpperCase()}</td>
                 <td>{this.state.unit_value}</td>
                 <td>{this.state.quantity}</td>
                 <td>{this.state.total_value.toFixed(2)}</td>
