@@ -14,6 +14,7 @@ let test = undefined;
 getEuroValue();
 
 /**Todo list
+ * Make it reacty (Store everything as great big giant JSON which apparently is very smart and clever according to react)
  * Currency switcher doesn't work inside the table. Only on total value.
  * Store in local storage.
  * Performance graph. (Prompt which interval when clicking it? Radio buttons for intervals?
@@ -33,9 +34,12 @@ getEuroValue();
  * Slide portfolio up and leave only bar to be able to slide it down again.
  *
  * Todo dun did
+ * Add portfolio
+ * Add stock
  * Total value is currently NaN€ instead of 0€*
  * Remove selected stock. [Idea: whenever checkbox is changed call callback function from portfolio to add/remove
  *                         it from a list. Then if remove selected is pressed, remove all stocks with keys in the list.]
+ * Remove portfolio
  */
 
 
@@ -71,41 +75,36 @@ class App extends Component {
     updateLocalStorage(){
         console.log("Update local storage");
         console.log(JSON.stringify(this.props.children));
-        /*
+
         localStorage.clear();
         console.log("Update local storage");
-        console.log(this.state.portfolios);
-        let portfolios = this.state.portfolios;
 
-        //localStorage.portfolios = JSON.stringify(portfolios);
-        //let lsPortfolios = JSON.parse(localStorage.portfolios);
-        //console.log(lsPortfolios);
-
-        //Need to turn portfolios into json objects myself I think and then import them in reverse.
-
-        //Iterate over each stock in portfolios stocks
-        let toLocalStorage = {};
-        portfolios.forEach(function(reactObject){
-            console.log("reactObject.props:");
-            console.log(reactObject);
-            let stocks = [];
-            reactObject.props.stocks.forEach(function(stock){
-                let toLSstock = {key: stock.key,
-                                name: stock.name,
-                                unit_value: stock.unit_value,
-                                quantity: stock.unit_value
-                                };
-                stocks.add(toLSstock);
-                console.log(toLSstock);
-
+        let portfolios = {};
+        this.state.portfolios.forEach(function(portfolio){
+            //Turn each portfolio into json object and pass it to portfolios
+            let portfolioToSave = {};
+            let stocks = portfolio.state.stocks;
+            stocks.forEach(function(stock){
+                //Turn each stock into json object and pass it to portfolioToSave
+                //We're only interested in saving the following info since the rest can be calculated from this info
+                //or can't be stored as json.
+                let jsonStock = {
+                    id: stock.props.id,
+                    name: stock.props.name,
+                    unit_value: stock.props.unit_value,
+                    quantity: stock.props.quantity
+                };
+                /* Todo
+                    Since we can't store these two as a json we need to remember to set them when importing
+                    updateSelected: stock.props.updateSelected,
+                    getcurrency: stock.props.getcurrency,
+                * */
+                portfolioToSave[stock.props.id] = jsonStock;
             });
-            //newStocks.push(<Stock symbol={name} unit_value={unit_value} quantity={quantity}/>);
-            //localStorage.portfolios['specific'].stocks = JSON.stringify(newStocks);
-            toLocalStorage.key = {key: reactObject.props.key,
-                                name: reactObject.props.name,
-                                stocks: stocks};
+            portfolios[portfolio.props.id] = portfolioToSave;
+
         });
-        */
+        localStorage.portfolios = portfolios;
     }
 
     deletePortfolio(key){
@@ -133,7 +132,8 @@ class App extends Component {
         }else{
             //Get current list of portfolios, push this new portfolio to it and update the state and local storage.
             let portfolios = this.state.portfolios;
-            portfolios.push(<Portfolio key={guid()} name={name} callback={this.updateLocalStorage.bind(this)} deletePortfolio={this.deletePortfolio.bind(this)}/>);
+            let id = guid();
+            portfolios.push(<Portfolio key={id} id={id} name={name} callback={this.updateLocalStorage.bind(this)} deletePortfolio={this.deletePortfolio.bind(this)}/>);
             this.updatePortfolios(portfolios);
             this.updateLocalStorage();
         }
@@ -161,7 +161,7 @@ class Portfolio extends Component {
         this.stocks = [];
         this.state = {
             currency: currency,
-            key: this.key,
+            id: this.props.id,
             stocks: this.stocks,
             totalValue: 0.0,
             selected: []
