@@ -10,26 +10,53 @@ let currency = "euro";
 let euroSymbol = "€";
 let dollarSymbol = "$";
 let euroValue = undefined;
-
+let test = undefined;
 getEuroValue();
+
+/**Todo list
+ * Currency switcher doesn't work inside the table. Only on total value.
+ * Store in local storage.
+ * Performance graph. (Prompt which interval when clicking it? Radio buttons for intervals?
+ *      Straight up fetch daily, weekly, monthly, yearly or all time from API.)
+ * Sorting
+ * Make the buttons appear in the right positions
+ * Currently stock value is only fetched once and stays the same.
+ *      ("Easy" fix: Whenever value is updated, remove old <Stock /> and create new <Stock /> with the new value).
+ *
+ * Todo for sanity
+ * Fix the fucking stocks/showStocks situation...
+ *      Option 1: Change the list that you show instead of creating new list to show when euros.
+ *      Option 2: First only store the stocks as a JSON list. Then when you show them make them <Stock />
+ *
+ * Todo bonus
+ * Enable cryptos.
+ * Slide portfolio up and leave only bar to be able to slide it down again.
+ *
+ * Todo dun did
+ * Total value is currently NaN€ instead of 0€*
+ * Remove selected stock. [Idea: whenever checkbox is changed call callback function from portfolio to add/remove
+ *                         it from a list. Then if remove selected is pressed, remove all stocks with keys in the list.]
+ */
+
+
 
 class App extends Component {
     constructor(props){
         super(props);
         let portfolios = [];
         if(storageAvailable("localStorage")){
-            //Check if there's some juicy localstorage history
+            //Check if there are any juicy localstorage portfolios
             if(localStorage.portfolios !== undefined){
                 let temp = JSON.parse(localStorage.portfolios);
                 Object.keys(temp).forEach(function(key){
-                    let portfolio = <Portfolio key={(temp[key]['props'].key)} name={(temp[key]['props'].name)} callback={this.updateLocalStorage.bind(this)}/>;
+                    let portfolio = <Portfolio key={(temp[key].key)} name={(temp[key]['props'].name)} callback={this.updateLocalStorage.bind(this)}/>;
                     let stocks = temp[key]['stocks'];
                     portfolios.push(portfolio);
                 }.bind(this));
                 console.log("Found existing list in local storage");
                 console.log(portfolios);
             }else{
-                //If there is no history in local storage, put the empty list there
+                //If there is no "portfolios" in local storage, put the empty list there
                 localStorage.portfolios = JSON.stringify(portfolios);
                 console.log("Putting empty list in local storage");
                 console.log(localStorage.portfolios);
@@ -43,7 +70,7 @@ class App extends Component {
     }
     updateLocalStorage(){
         console.log("Update local storage");
-        console.log(this.props.children);
+        console.log(JSON.stringify(this.props.children));
         /*
         localStorage.clear();
         console.log("Update local storage");
@@ -82,7 +109,7 @@ class App extends Component {
     }
 
     deletePortfolio(key){
-        console.log("Deleting " + key);
+        //Delete the portfolio whose [X] was just clicked. The portfolio has the key that's provided.
         let portfolios = this.state.portfolios;
         portfolios.forEach(function(portfolio){
             if(portfolio.key === key){
@@ -90,7 +117,6 @@ class App extends Component {
                 portfolios.splice(index, 1);
             }
         });
-
         this.updatePortfolios(portfolios);
     }
     updatePortfolios(portfolios){
@@ -105,6 +131,7 @@ class App extends Component {
         if(name === null || name.trim() === ""){
             alert("The name cannot be empty.");
         }else{
+            //Get current list of portfolios, push this new portfolio to it and update the state and local storage.
             let portfolios = this.state.portfolios;
             portfolios.push(<Portfolio key={guid()} name={name} callback={this.updateLocalStorage.bind(this)} deletePortfolio={this.deletePortfolio.bind(this)}/>);
             this.updatePortfolios(portfolios);
@@ -136,14 +163,16 @@ class Portfolio extends Component {
             currency: currency,
             key: this.key,
             stocks: this.stocks,
-            totalValue: 0.0
+            totalValue: 0.0,
+            selected: []
         };
         this.saveChange();
     }
     getStocks(){
         return this.state.stocks;
     }
-    addStock(stock){
+    addStock(){
+        //This function takes the input and tries to fetch the data of that stock symbol.
         let input = prompt("Enter the stock's symbol and how many you have. e.g. \"MSFT, 10\"");
         //input = "MSFT, 13".split(",");
         if(input === null || input.trim() === ""){
@@ -153,64 +182,36 @@ class Portfolio extends Component {
             input = input.split(",");
         }
         getStockData(this.addStock2.bind(this), input[0].trim(), input[1].trim());
-        /*
-        this.stocks = this.state.stocks;
-        this.stocks.push(stock);
-        const oldState = this.state;
-        this.setState({
-            stocks: this.stocks,
-            totalValue: parseFloat(oldState.totalValue) + parseFloat(stock.unit_value)*parseFloat(stock.quantity)
-        });
-        this.saveChange();
-        */
     }
     addStock2(jsonObj, quantity){
+        //The callback function of the request.
+        //This is where the stock is actually created.
         console.log("Got the data!");
-        console.log(jsonObj);
-        let name = Object.values(jsonObj['Meta Data'])[1];
-        let firstVal = Object.values(jsonObj['Time Series (1min)'])[0];
-        let latestClose = firstVal['4. close'];
-        let oldValue = this.state.totalValue;
-        let stocks = this.state.stocks;
-        let stock = <Stock key={guid()} name={name} unit_value={latestClose} quantity={quantity} />;
-        let newTotalValue = (parseFloat(oldValue) + parseFloat(latestClose)*parseFloat(quantity)).toFixed(2);
-        //console.log("benis");
-        //console.log(oldValue);
-        //console.log(stock.unit_value);
-        //console.log(stock.quantity);
+        if(Object.keys(jsonObj)[0] === "Error Message"){
+            alert("Could not find a stock with that symbol. Double check and try again.");
+        }else{
+            let name = Object.values(jsonObj['Meta Data'])[1]; //The symbol
+            let firstVal = Object.values(jsonObj['Time Series (1min)'])[0]; //First row of the time series
+            let latestClose = firstVal['4. close']; //The close value of the first row (most recent)
+            let oldValue = this.state.totalValue;
+            let stocks = this.state.stocks;
+            let id = guid();
+            let stock = <Stock key={id} id={id} name={name} unit_value={latestClose} quantity={quantity} />;
+            let newTotalValue = (parseFloat(oldValue) + parseFloat(latestClose)*parseFloat(quantity)).toFixed(2);
 
-        stocks.push(stock);
-        this.setState({
-            currency: this.state.currency,
-            stocks: this.stocks,
-            totalValue: newTotalValue
-        });
-        this.saveChange();
-    }
-    removeSelected(e){
-        console.log("Removing!");
-        let oldState = this.state;
-        let stocks = oldState.stocks;
-        console.log(stocks);
-        let oldValue = oldState.totalValue;
-        for(let i=0; i<stocks.length; i++){
-            console.log(stocks[i].selected);
-            if(stocks[i].selected) {
-                console.log("Found selected: " + stocks[i].key);
-                stocks.splice(i, 1);
-                this.setState({
-                    stocks: stocks,
-                    totalValue: oldValue - parseFloat(stocks[i].total_value)
-                });
-            }
+            stocks.push(stock);
+            this.updateStocks(stocks, newTotalValue);
+            this.saveChange();
         }
-        this.saveChange();
     }
     perfGraph(){
         console.log("Show performance graph!");
     }
     deletePortfolio(){
-        this.deleteThis(this.state.key);
+        let input = prompt("Are you sure you want to delete this portfolio (y/n)?");
+        if(input.toLowerCase() === "y"){
+            this.deleteThis(this._reactInternalFiber.key);
+        }
     }
     showEuro(){
         this.updateCurrency("euro");
@@ -219,42 +220,115 @@ class Portfolio extends Component {
         this.updateCurrency("dollar");
     }
     updateCurrency(currency){
-        let oldState = this.state;
-        let newState = {
-            currency: currency,
-            stocks: oldState.stocks,
-            totalValue: oldState.totalValue
-        }
-        this.setState(newState);
+        let state = this.state;
+        state.currency = currency;
+        this.setState(state)
+        this.updateToShow();
     }
+    updateStocks(stocks, newTotalValue){
+        console.log("1Setting total value to: ", newTotalValue);
+        let state = this.state;
+        state.stocks = stocks;
+        state.totalValue = newTotalValue;
 
-    render() {
-        let totalValue = parseFloat(this.state.totalValue).toFixed(2);
-        let currencySymbol = dollarSymbol;
+        this.setState(state);
+        this.updateToShow();
+    }
+    updateToShow(){
         let stocks = this.state.stocks;
+        let totalValue = this.getTotalValue(stocks);
+        console.log("Update to show totalValue: " + totalValue);
         let showStocks = [];
+        let getcurr = this.getCurrency.bind(this);
+        let updateSelected = this.setSelected.bind(this);
         if(this.state.currency === "euro"){
             totalValue = (totalValue * euroValue).toFixed(2);
-            currencySymbol = euroSymbol;
+            //This is really REALLY ugly but I had to change it half-way and it was the only way I could make it work (fast enough).
+            //I never actually show the first <Stock />s I make, I only show these new ones. :(
             stocks.forEach(function(stock){
-                console.log("stock");
-                console.log(stock);
-                showStocks.push(<Stock key={stock.key} name={stock.props.name} unit_value={(stock.props.unit_value*euroValue).toFixed(2)} quantity={stock.props.quantity} />)
+                let id = stock.key;
+                showStocks.push(<Stock
+                    updateSelected={updateSelected}
+                    getcurrency={getcurr}
+                    key={id}
+                    id={id}
+                    name={stock.props.name}
+                    unit_value={(stock.props.unit_value*euroValue).toFixed(2)}
+                    quantity={stock.props.quantity} />);
             });
-
+            console.log("showing as euros");
         }else{
-            currencySymbol = dollarSymbol;
+            totalValue = totalValue.toFixed(2);
             showStocks = stocks;
+            console.log("showing as dollars");
         }
-        console.log("Gonna show this now");
-        console.log(showStocks);
+        //Update state
+        let state = this.state;
+        state.showStocks = showStocks;
+        state.totalValue = totalValue;
+        this.setState(state);
+    }
+    getCurrency(){
+        console.log("getCurrency");
+        return this.state.currency;
+    }
+    getTotalValue(stocks){
+        console.log("Getting total value");
+        let totalValue = 0;
+        stocks.forEach(function(stock){
+            totalValue += parseFloat(stock.props.quantity)*parseFloat(stock.props.unit_value);
+            console.log(totalValue);
+        });
+        return totalValue;
+    }
+    //Changes list of selected stocks.
+    setSelected(key, bool){
+        console.log("Change in selected!");
+        let state = this.state;
+        let selected = this.state.selected;
+        if(bool){
+            //The stock with this key is now selected
+            //Add it to the list
+            selected.push(key);
+            state.selected = selected;
+            this.setState(state);
+        }else{
+            //The stock with this key is now unselected
+            //Remove it from the list
+            let index = selected.indexOf(key);
+            selected.splice(index, 1);
+            state.selected = selected;
+            this.setState(state);
+        }
+        console.log(this.state.selected);
+    }
+    //Removes all stocks that are in the list of selected stocks
+    removeSelected(){
+        console.log("Removing stock!");
+        let stocks = this.state.stocks;
+        let selected = this.state.selected;
+        selected.forEach(function(key){
+            stocks.forEach(function(stock){
+                if(stock.props.id === key){
+                    stocks.splice(stocks.indexOf(stock), 1);
+                }
+            });
+        });
+        this.updateStocks(stocks, this.getTotalValue(stocks));
+        this.saveChange();
+    }
+    render() {
+        let currencySymbol = dollarSymbol;
+        if(this.state.currency === "euro"){
+            currencySymbol = euroSymbol;
+        }
         return (
             <div className="Portfolio col- col-5 col-m-11">
                 <div className="Portfolio-inner">
                     <div className="Portfolio-header">
                         <span   className="Portfolio-title col- col-5 col-m-11">{this.props.name}</span>
-                        <Button function={this.showEuro.bind(this)} className="Portfolio-header-showEuro" label="Show in $"/>
-                        <Button function={this.showDollar.bind(this)} className="Portfolio-header-showDollar" label="Show in €"/>
+                        <Button function={this.showDollar.bind(this)}      className="Portfolio-header-showEuro"     label="Show in $"/>
+                        <Button function={this.showEuro.bind(this)}        className="Portfolio-header-showDollar"   label="Show in €"/>
                         <Button function={this.deletePortfolio.bind(this)} className="Portfolio-header-deleteButton" label="X"/>
                     </div>
                     <div className="Portfolio-content">
@@ -279,13 +353,13 @@ class Portfolio extends Component {
                             </tr>
                             </thead>
                             <tbody>
-                            {showStocks}
+                                {this.state.showStocks}
                             </tbody>
                         </table>
                     </div>
                     <div className="Portfolio-footer">
                         <p>
-                            Total value: <label className="totalPortfolioValue">{totalValue}{currencySymbol}</label>
+                            Total value: <label className="totalPortfolioValue">{this.state.totalValue}{currencySymbol}</label>
                         </p>
                         <Button function={this.addStock.bind(this)} className="Portfolio-footer-addStockButton" label="Add stock"/>
                         <Button function={this.perfGraph.bind(this)} className="Portfolio-footer-perfGraphButton" label="Perf. graph"/>
@@ -301,7 +375,9 @@ class Stock extends Component{
     constructor(props){
         super(props);
         this.state = {
-            key: this.key,
+            id: this.props.id,
+            updateSelected: this.props.updateSelected,
+            getcurrency: this.props.getcurrency,
             name: this.props.name,
             unit_value: this.props.unit_value,
             quantity: this.props.quantity,
@@ -309,27 +385,39 @@ class Stock extends Component{
             selected: false
         };
     }
-    onChosen(e){
+    onChange(e){
         console.log("onChosen!");
         console.log(e.target.value);
         this.setState({
             selected: e.target.checked
         });
+        console.log("Sending key: " + this.state.id + " and boolean: " + !this.state.selected + " to updateSelected in portfolio!");
+        //Send key of this stock to portfolio to be added to list
+        if(!this.state.selected){
+            this.state.updateSelected(this.state.id, true);
+        }else{
+            this.state.updateSelected(this.state.id, false);
+        }
     }
     render(){
-        const category = this.props.category;
+        //Draw each table row
+        console.log("This is in render in stock");
+        //console.log(this.state.getcurrency());
         return(
             <tr>
                 <td>{this.state.name}</td>
                 <td>{this.state.unit_value}</td>
                 <td>{this.state.quantity}</td>
                 <td>{this.state.total_value.toFixed(2)}</td>
-                <td><input type='checkbox' onChange={this.onChosen.bind(this)} checked={this.state.selected} value={this.state.key}/></td>
+                <td><input type='checkbox' onChange={this.onChange.bind(this)} checked={this.state.selected} value={this.key}/></td>
             </tr>
         );
     }
 }
 
+/**
+ * A custom button
+ */
 class Button extends Component {
     constructor(props){
         super(props);
@@ -348,6 +436,10 @@ class Button extends Component {
         );
     }
 }
+
+/**
+ * An image that you can click
+ */
 class ClickableImage extends Component{
     render(){
         return(
@@ -356,13 +448,24 @@ class ClickableImage extends Component{
     }
 }
 
-//Get stock data from alphavantage API
+/**
+ * Get stock data from alphavantage API
+ * @param callback: the function to return the data to.
+ * @param symbol: the symbol of the stock
+ * @param quantity: the quantity of the stock. Needed in the callback function when adding stocks.
+ */
 function getStockData(callback, symbol, quantity){
     let url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol="+symbol+"&interval=1min&apikey="+API_KEY;
     console.log("Doing API request with url:" + url);
     xhttpRequest(callback, url, quantity);
 }
 
+/**
+ *
+ * @param callback
+ * @param file
+ * @param rememberThis
+ */
 function xhttpRequest(callback, file, rememberThis){
     var rawFile = new XMLHttpRequest();
     rawFile.open("GET", file, true);
@@ -386,10 +489,20 @@ function error(status, file){
     alert("Could not get " + file + "\n 404, file not found.");
 }
 
+/**
+ * Used to update update the euroValue variable.
+ * Automatically called when page is loaded.
+ * Can be used after that if needed as well.
+ */
 function getEuroValue(){
     let url = "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=EUR&apikey="+API_KEY;
     xhttpRequest(setEuroValue, url, null);
 }
+
+/**
+ * Never call this directly.
+ * Gets called automatically by getEuroValue().
+ */
 function setEuroValue(jsonObj){
     console.log("Set euro value");
     euroValue = jsonObj["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
