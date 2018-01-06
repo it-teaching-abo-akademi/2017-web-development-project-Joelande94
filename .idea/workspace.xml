@@ -31,8 +31,8 @@
       <file leaf-file-name="App.css" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/App.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="436">
-              <caret line="204" column="23" lean-forward="true" selection-start-line="204" selection-start-column="23" selection-end-line="204" selection-end-column="23" />
+            <state relative-caret-position="793">
+              <caret line="226" column="0" lean-forward="true" selection-start-line="226" selection-start-column="0" selection-end-line="226" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -41,20 +41,17 @@
       <file leaf-file-name="App.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/App.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="378">
-              <caret line="229" column="52" lean-forward="true" selection-start-line="229" selection-start-column="52" selection-end-line="229" selection-end-column="52" />
+            <state relative-caret-position="597">
+              <caret line="586" column="0" lean-forward="false" selection-start-line="586" selection-start-column="0" selection-end-line="586" selection-end-column="0" />
               <folding>
                 <element signature="e#0#41#0" expanded="true" />
                 <element signature="e#110#153#0" expanded="true" />
                 <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-                <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
                 <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
                 <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-                <element signature="n#Portfolio#0" expanded="false" />
                 <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
                 <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
                 <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-                <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
                 <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
                 <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
                 <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -97,9 +94,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>updateLocalStorage</find>
-      <find>got the data</find>
-      <find>this.saveCh</find>
       <find>this.state.stocks</find>
       <find>totalValue</find>
       <find>state.totalValue</find>
@@ -127,6 +121,9 @@
       <find>close</find>
       <find>header</find>
       <find>light</find>
+      <find>y/n</find>
+      <find>Loader</find>
+      <find>removeSelec</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -248,7 +245,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="219914000" />
+    <option name="totallyTimeSpent" value="225998000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -349,14 +346,11 @@
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -416,14 +410,11 @@
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -483,14 +474,11 @@
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -550,14 +538,11 @@
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -617,14 +602,11 @@
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -684,14 +666,11 @@
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -751,14 +730,11 @@
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -810,14 +786,11 @@
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -869,14 +842,11 @@
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />
@@ -936,6 +906,14 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/App.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="793">
+          <caret line="226" column="0" lean-forward="true" selection-start-line="226" selection-start-column="0" selection-end-line="226" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/package-lock.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -944,30 +922,19 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/App.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="436">
-          <caret line="204" column="23" lean-forward="true" selection-start-line="204" selection-start-column="23" selection-end-line="204" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/App.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="229" column="52" lean-forward="true" selection-start-line="229" selection-start-column="52" selection-end-line="229" selection-end-column="52" />
+        <state relative-caret-position="597">
+          <caret line="586" column="0" lean-forward="false" selection-start-line="586" selection-start-column="0" selection-end-line="586" selection-end-column="0" />
           <folding>
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#110#153#0" expanded="true" />
             <element signature="n#!!block;n#updateLocalStorage#0;n#App#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#updatePortfolio#0;n#App#0" expanded="false" />
             <element signature="n#!!block;n#addPortfolio#0;n#App#0" expanded="false" />
-            <element signature="n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#constructor#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#componentDidMount#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#addStock#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#deletePortfolio#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showEuro#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#showDollar#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#updateCurrency#0;n#Portfolio#0" expanded="false" />

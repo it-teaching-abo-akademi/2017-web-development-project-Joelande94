@@ -239,11 +239,12 @@ class App extends Component {
             xhttpRequest(this.addGraphData.bind(this), url, null);
             console.log("Dun did request!");
         }.bind(this));
-        state.graph = <Loader/>;
+        state.graph = <div><Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/><Loader/></div>;
         disableButtons = true;
         this.setState(state);
     }
     addGraphData(jsonObj){
+        //If the client hasn't pressed the X to cancel the graph, then do the following.
         if(!this.state.cancelGraph){
             console.log("Adding graph data");
             if(debugAll || debugGraph) {
@@ -257,16 +258,17 @@ class App extends Component {
             let state = this.state;
             state.graphLinesCount = state.graphLinesCount + 1;
 
-            let counter = 0;
+            //For each value in the time series, get the date and the closing value and make a JSON point of it.
+            //Then add that point to the list of points.
             Object.keys(timeSeries).forEach(function(key){
                 let date = key;
-                let close = timeSeries[date]["4. close"];
-                let jsPoint = {x: counter, y: parseFloat(close)};
+                let close = timeSeries[key]["4. close"];
+                let jsPoint = {x: date, y: parseFloat(close)};
                 points.push(jsPoint);
-                counter++;
                 if(debugAll || debugGraph) console.log(symbol, "close:", close);
             });
-            points.reverse(); //Otherwise latest will be leftmost
+            points.reverse();
+            //Push this line to the list of graph lines in state.
             state.graphLines.push({
                 name: symbol,
                 color: color,
@@ -276,6 +278,7 @@ class App extends Component {
             console.log("state.graphLinesCount:",state.graphLinesCount);
             console.log("state.graphLinesTotal:",state.graphLinesTotal);
 
+            //Only create the graph when the final value has arrived.
             if(state.graphLinesCount === state.graphLinesTotal){
                 state.graph = undefined;
                 state.graph = <GraphWindow name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
@@ -318,6 +321,7 @@ class App extends Component {
                 <div className="App">
                     <div className="BlurLayer">
                         <div className="Header">
+                            <span>Stock portfolio Manager</span>
                             <Button function={this.addPortfolio.bind(this)}
                                     className="AddPortfolioButton" label="Add portfolio"/>
                         </div>
@@ -438,8 +442,8 @@ class Portfolio extends Component {
         this.setGraph([this.state.name, state.jsStocks]);
     }
     deletePortfolio(){
-        let input = prompt("Are you sure you want to delete this portfolio (y/n)?");
-        if(input !== null && input.toLowerCase() === "y"){
+        let input = window.confirm("Are you sure you want to delete this portfolio?");
+        if(input){
             console.log("Deleting");
             console.log(this.state.id);
             this.deleteThis(this.state.id);
@@ -584,11 +588,15 @@ class Portfolio extends Component {
         console.log("Removing stock!");
         let jsStocks = this.state.jsStocks;
         let selected = this.state.selected;
-        selected.forEach(function(key){
-            console.log("deleting:", key);
-            delete jsStocks[key];
-            selected.splice(selected.indexOf(key), 1);
-        });
+        let i = selected.length;
+        while(i--){
+            Object.keys(jsStocks).forEach(function(key){
+                if(selected[i] === key){
+                    delete jsStocks[key];
+                    selected.splice(selected.indexOf(key), 1);
+                }
+            });
+        }
         this.updateStocks(jsStocks, this.getTotalValue(jsStocks));
     }
     render() {
@@ -728,15 +736,22 @@ class GraphWindow extends Component{
                         width={800}
                         height={400}
                         xLabel={"Time"}
-                        yLabel={"Closing value"}
+                        yLabel={"Closing value (USD)"}
                         data={this.state.data}
-                        hidePoints={true}
+                        hidePoints={false}
+                        pointRadius={0.5}
+                        showLegends={true}
+                        isDate={true}
+                        xDisplay={dateYearly}
                     />
                 </div>
             </div>
         );
 
     }
+}
+function dateYearly(info){
+    return info.getFullYear();
 }
 function getRandomColor() {
     var letters = '23456789ABCD';
