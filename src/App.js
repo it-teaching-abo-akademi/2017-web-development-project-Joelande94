@@ -75,7 +75,6 @@ class App extends Component {
         console.log("updating euroValue");
         console.log(jsonObj);
         euroValue = jsonObj["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
-
     }
 
     /**
@@ -231,18 +230,17 @@ class App extends Component {
                 stockNames.push(jsStocks[key].name);
             }
         });
-        state.graphLineTotal = stockNames.length;
+        state.graphLinesTotal = stockNames.length;
         state.graphLinesCount = 0;
+        this.setState(state);
         //For each stock name get the data
         stockNames.forEach(function(name){
             let url = "https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol="+name+"&apikey="+API_KEY;
             xhttpRequest(this.addGraphData.bind(this), url, null);
             console.log("Dun did request!");
         }.bind(this));
-
         state.graph = <Loader/>;
         disableButtons = true;
-        this.closeGraph();
         this.setState(state);
     }
     addGraphData(jsonObj){
@@ -275,8 +273,13 @@ class App extends Component {
                 points: points
             });
             console.log(state.graphLines);
-            state.graph = undefined;
-            state.graph = <GraphWindow name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
+            console.log("state.graphLinesCount:",state.graphLinesCount);
+            console.log("state.graphLinesTotal:",state.graphLinesTotal);
+
+            if(state.graphLinesCount === state.graphLinesTotal){
+                state.graph = undefined;
+                state.graph = <GraphWindow name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
+            }
             this.setState(state);
         }
     }
@@ -722,7 +725,7 @@ class GraphWindow extends Component{
                 <h1>{this.state.name}</h1>
                 <div className="GraphWindow">
                     <LineChart
-                        width={600}
+                        width={800}
                         height={400}
                         xLabel={"Time"}
                         yLabel={"Closing value"}
