@@ -5,27 +5,35 @@ import './App.css';
 /*Own imports*/
 import sort_logo from './updown_arrow.png';
 
+import LineChart from 'react-linechart'; //npm install react-linechart --save
+import '../node_modules/react-linechart/dist/styles.css';
+
+
+
 let API_KEY = "CXOK71OQTSO3FIY7";
 let currency = "euro";
 let euroSymbol = "€";
 let dollarSymbol = "$";
 let euroValue = 0.83;
 let test = undefined;
-getEuroValue();
+let debugAll = false;
+let disableButtons = false;
 
 //HOLY SPIRIT OF REACT
 //      -> INFORMATION FLOWS UP. NEVER FETCH. <-
 
-/**Todo list
+/**Todo fix
  * Currency switcher doesn't work inside the table. Only on total value.
- * Performance graph. (Prompt which interval when clicking it? Radio buttons for intervals?
- *      Straight up fetch daily, weekly, monthly, yearly or all time from API.)
  * Currently stock value is only fetched once and stays the same.
  *      Addition: fetch new value for each stock when loading page.
  * New euro value is currently not used when fetching from localStorage
  *      because localStorage is faster than the response for the eurovalue
  * Make the buttons appear in the right positions
+ *
+ * Todo feature
  * Sorting
+ * Performance graph. (Prompt which interval when clicking it? Radio buttons for intervals?
+ *      Straight up fetch daily, weekly, monthly, yearly or all time from API.)
  *
  * Todo bonus
  * Enable cryptos.
@@ -53,8 +61,23 @@ class App extends Component {
         let jsPortfolios = {};
         this.state = {
             portfolios: portfolios,
-            jsPortfolios: jsPortfolios
+            jsPortfolios: jsPortfolios,
+            graph: undefined
         }
+        getEuroValue(this.updateEuroValue.bind(this));
+    }
+    updateEuroValue(jsonObj){
+        euroValue = jsonObj["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
+
+    }
+
+    /**
+     *
+     * @param jsonObj like this {name: "MSFT", unit_value:"13.37"}
+     */
+    updateUnitValue(jsonObj){
+        //in great big giant json object, for each stock with this name change it's unit value to this new value
+        //Also since we update unit value we clearly have to update total_value if that exists?
     }
     componentDidMount(){
         console.log("App did mount");
@@ -72,6 +95,7 @@ class App extends Component {
                         let portfolio = <Portfolio key={(jsPortfolios[key].id)}
                                                    id={jsPortfolios[key].id}
                                                    name={(jsPortfolios[key].name)}
+                                                   setGraph={this.setGraph.bind(this)}
                                                    deletePortfolio={this.deletePortfolio.bind(this)}
                                                    updatePortfolio={this.updatePortfolio.bind(this)}
                                                    currency={jsPortfolios[key].currency}
@@ -99,11 +123,22 @@ class App extends Component {
     updateLocalStorage(){
         if(this.loaded){
             //This will probably be useless after Reactyfying
-            console.log("Saving to local storage");
             let jsPortfolios = this.state.jsPortfolios;
-            console.log(jsPortfolios);
+            if(debugAll){
+                console.log("Saving to local storage");
+                console.log(jsPortfolios);
+            }
             localStorage.jsPortfolios = JSON.stringify(jsPortfolios);
         }
+        this.alwaysUpdate();
+    }
+
+    /**
+     * Anything happened? Update this!
+     */
+    alwaysUpdate(){
+        getEuroValue(this.updateEuroValue.bind(this));
+
     }
 
     deletePortfolio(key){
@@ -131,10 +166,12 @@ class App extends Component {
 
     updatePortfolio(portfolio){
         //Update this portfolio
-        console.log("Update portfolio");
-        console.log(portfolio);
+        if(debugAll){
+            console.log("Update portfolio");
+            console.log(portfolio);
+            console.log(portfolio.id);
+        }
         let state = this.state;
-        console.log(portfolio.id);
         state.jsPortfolios[portfolio.id] = portfolio;
         this.setState(state);
         this.updateLocalStorage();
@@ -157,6 +194,7 @@ class App extends Component {
             portfolios.push(<Portfolio key={id}
                                        id={id}
                                        name={name}
+                                       setGraphApp={this.setGraph.bind(this)}
                                        updatePortfolio={this.updatePortfolio.bind(this)}
                                        deletePortfolio={this.deletePortfolio.bind(this)}/>);
             state.portfolios = portfolios;
@@ -171,28 +209,98 @@ class App extends Component {
             this.updateLocalStorage();
         }
     }
+    setGraph(data){
+        let name = data[0];
+        let jsStocks = data[1];
+        let state = this.state;
+
+        let stockNames = [];
+        //Grab names of the stocks
+        Object.keys(jsStocks).forEach(function(key){
+            let name = jsStocks[key].name;
+            console.log("Name: ",name);
+            if(!stockNames.indexOf(name) >= 0){ //If not in list add it
+                stockNames.push(jsStocks[key].name);
+            }
+        });
+        //For each stock name get the data
+        stockNames.forEach(function(name){
+            let url = "https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol="+name+"&apikey="+API_KEY;
+            xhttpRequest(this.addGraphData.bind(this), url, null);
+            console.log("Dun did request!");
+        }.bind(this));
+
+        if(jsStocks === undefined || JSON.stringify(jsStocks) === JSON.stringify({})){
+            state.graph = undefined;
+        }else{
+            state.graph = <GraphWindow note={"Please wait while data is being fetched."} name={name} data={[]} closeGraph={this.closeGraph.bind(this)}/>;
+            disableButtons = true;
+        }
+        this.setState(state);
+    }
+    addGraphData(jsonObj){
+        console.log("Adding graph data");
+        console.log("Raw:");
+        console.log(jsonObj);
+        //For each point in time take that time and close value and create new JSON object like: {x: time, y: close} and add to list "points"
+        /**
+         * data= {
+                    name: {name}
+                    color: {random color}
+                    points: {points}
+                 }
+        */
+    }
+    closeGraph(){
+        let state = this.state;
+        state.graph = undefined;
+        disableButtons = false;
+        this.setState(state);
+    }
     render() {
-        return (
-        <div className="App">
-            <div className="Header">
-                <Button function={this.addPortfolio.bind(this)}
-                        className="AddPortfolioButton" label="Add portfolio"/>
-            </div>
-            <div className="Portfolio_container col-11 col-m-11">
-                {this.state.portfolios}
-            </div>
-        </div>
-        );
+        if(this.state.graph === undefined){
+            return (
+                <div className="App">
+                    <div className="Header">
+                        <Button function={this.addPortfolio.bind(this)}
+                                className="AddPortfolioButton" label="Add portfolio"/>
+                    </div>
+                    <div className="Portfolio_container col-11 col-m-11">
+                        {this.state.portfolios}
+                    </div>
+                </div>
+            );
+        }else{
+            return (
+                <div className="App">
+                    <div className="GraphContainer">
+                        {this.state.graph}
+                    </div>
+                    <div className="BlurLayer">
+                        <div className="Header">
+                            <Button function={this.addPortfolio.bind(this)}
+                                    className="AddPortfolioButton" label="Add portfolio"/>
+                        </div>
+                        <div className="Portfolio_container col-11 col-m-11">
+                            {this.state.portfolios}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
     }
 }
 class Portfolio extends Component {
     updatePortfolio = undefined;
-    deleteThis = undefined;
-    loaded = false;
+    deleteThis      = undefined;
+    setGraph     = undefined;
+    loaded          = false;
     constructor(props){
         super(props);
-        this.deleteThis = this.props.deletePortfolio;
+        this.deleteThis      = this.props.deletePortfolio;
         this.updatePortfolio = this.props.updatePortfolio;
+        this.setGraph     = this.props.setGraph;
 
         this.state = {
             name:        this.props.name,
@@ -200,14 +308,17 @@ class Portfolio extends Component {
             id:          this.props.id,
             jsStocks:    this.props.jsStocks,
             total_value: 0.0,
-            selected:    []
+            selected:    [],
+            showGraph:   false
         };
         this.loaded = true;
     }
 
     componentDidMount(){
         //Don't try to setState() before component is properly mounted.
-        this.updateToShow();
+        if(this.state.jsStocks !== undefined){
+            this.updateToShow();
+        }
     }
 
     addStock(){
@@ -280,6 +391,8 @@ class Portfolio extends Component {
     }
     perfGraph(){
         console.log("Show performance graph!");
+        let state = this.state;
+        this.setGraph([this.state.name, state.jsStocks]);
     }
     deletePortfolio(){
         let input = prompt("Are you sure you want to delete this portfolio (y/n)?");
@@ -302,8 +415,8 @@ class Portfolio extends Component {
         this.updateToShow();
     }
     updateStocks(stocks, newTotalValue){
-        console.log("1Setting total value to: ", newTotalValue);
         let state = this.state;
+        state.jsStocks = stocks;
         state.total_value = newTotalValue;
 
         this.setState(state);
@@ -315,7 +428,7 @@ class Portfolio extends Component {
      * let the portfolio it's time to re-render
      */
     renderNow(){
-        console.log("Render now!");
+        if(debugAll)console.log("Render now!");
         this.forceUpdate();
     }
     updateToShow(){
@@ -323,10 +436,10 @@ class Portfolio extends Component {
         let showStocks = [];
         let getcurr = this.getCurrency.bind(this);
         let updateSelected = this.setSelected.bind(this);
-        let totalValue = this.getTotalValue(jsStocks);
         let multiplier = 1;
-
+        let totalValue = 0;
         if(jsStocks !== undefined){
+            totalValue = this.getTotalValue(jsStocks);
             if(this.state.currency === "euro"){
                 multiplier = euroValue;
                 console.log("Showing as euros");
@@ -336,11 +449,13 @@ class Portfolio extends Component {
         }
         totalValue = (totalValue * multiplier).toFixed(2);
         Object.keys(jsStocks).forEach(function(key){
-            console.log("in showstocks loop");
             let stock = jsStocks[key];
             let unit_value = (parseFloat(stock.unit_value)*multiplier).toFixed(2);
             let id = stock.id;
-            console.log("Unit_value:", unit_value);
+            if(debugAll){
+                console.log("in showstocks loop");
+                console.log("Unit_value:", unit_value);
+            }
             showStocks.push(<Stock
                 updateSelected={updateSelected}
                 getcurrency={getcurr}
@@ -351,11 +466,13 @@ class Portfolio extends Component {
                 quantity={stock.quantity}
                 renderNow={this.renderNow.bind(this)}/>);
         }.bind(this));
-        console.log("showing as euros");
+        if(debugAll){
+            console.log("showing as euros");
+            console.log("Total value:", totalValue);
+            console.log("showStocks:");
+            console.log(showStocks);
+        }
 
-        console.log("Total value:", totalValue);
-        console.log("showStocks:");
-        console.log(showStocks);
 
         //Update state
         let state = this.state;
@@ -373,7 +490,7 @@ class Portfolio extends Component {
      */
     passItUp(){
         let state = this.state;
-        console.log("Saving state!");
+        if(debugAll)console.log("Saving state!");
         let save = {
             name: state.name,
             id: state.id,
@@ -389,7 +506,7 @@ class Portfolio extends Component {
         return this.state.currency;
     }
     getTotalValue(jsStocks){
-        console.log("Getting total value");
+        if(debugAll)console.log("Getting total value");
         let totalValue = 0;
         console.log(jsStocks);
         Object.keys(jsStocks).forEach(function(key){
@@ -436,8 +553,10 @@ class Portfolio extends Component {
         if(this.state.currency === "euro"){
             currencySymbol = euroSymbol;
         }
-        console.log("Drawing showstocks: ");
-        console.log(this.state.showStocks);
+        if(debugAll){
+            console.log("Drawing showstocks: ");
+            console.log(this.state.showStocks);
+        }
         return (
             <div className="Portfolio col- col-5 col-m-11">
                 <div className="Portfolio-inner">
@@ -446,6 +565,7 @@ class Portfolio extends Component {
                         <Button function={this.showDollar.bind(this)}      className="Portfolio-header-showEuro"     label="Show in $"/>
                         <Button function={this.showEuro.bind(this)}        className="Portfolio-header-showDollar"   label="Show in €"/>
                         <Button function={this.deletePortfolio.bind(this)} className="Portfolio-header-deleteButton" label="X"/>
+                        <br/>
                     </div>
                     <div className="Portfolio-content">
                         <table>
@@ -499,13 +619,13 @@ class Stock extends Component{
             name: this.props.name,
             unit_value: this.props.unit_value,
             quantity: this.props.quantity,
-            total_value: parseFloat(this.props.unit_value)*parseFloat(this.props.quantity),
+            total_value: (parseFloat(this.props.unit_value)*parseFloat(this.props.quantity)).toFixed(2),
             selected: false
         };
     }
 
     componentDidMount(){
-        console.log("Stock component did mount!");
+        if(debugAll)console.log("Stock component did mount!");
         this.renderNow();
     }
     onChange(e){
@@ -520,16 +640,55 @@ class Stock extends Component{
     }
     render(){
         //Draw each table row
-        console.log("This is in render in stock");
+        if(debugAll) {
+            console.log("This is in render in stock");
+        }
         //console.log(this.state.getcurrency());
         return(
             <tr>
                 <td>{this.state.name.toUpperCase()}</td>
                 <td>{this.state.unit_value}</td>
                 <td>{this.state.quantity}</td>
-                <td>{this.state.total_value.toFixed(2)}</td>
+                <td>{this.state.total_value}</td>
                 <td><input type='checkbox' onChange={this.onChange.bind(this)} checked={this.state.selected} value={this.key}/></td>
             </tr>
+        );
+    }
+}
+
+class GraphWindow extends Component{
+    renderGraph = undefined;
+    constructor(props){
+        super(props);
+        this.renderGraph = this.props.renderGraph;
+        this.closeGraphCallback = this.props.closeGraph;
+        this.state = {
+            name: this.props.name,
+            data: this.props.data,
+            note: this.props.note,
+        };
+    }
+    closeGraph(){
+        this.closeGraphCallback();
+    }
+    render(){
+        return (
+            <div>
+                <div className="GraphWindowHeader">
+                    <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+                </div>
+                <h1>{this.state.name}</h1>
+                <h4>{this.state.note}</h4>
+                <div className="GraphWindow">
+                    <LineChart>
+                        width={600}
+                        height={400}
+                        xLabel={"Closing value"}
+                        yLabel={"Time"}
+                        data={this.state.data}
+                    </LineChart>
+                </div>
+            </div>
         );
     }
 }
@@ -545,7 +704,9 @@ class Button extends Component {
         };
     }
     handleClick(e){
-        this.state.function(e);
+        if(!disableButtons || e.target.offsetParent.className === "GraphContainer"){
+            this.state.function(e);
+        }
     }
     render(){
         return (
@@ -583,7 +744,7 @@ function getStockData(callback, symbol, quantity){
  *
  * @param callback
  * @param file
- * @param rememberThis
+ * @param rememberThis: when needed (e.g. quantity of a stock)
  */
 function xhttpRequest(callback, file, rememberThis){
     var rawFile = new XMLHttpRequest();
@@ -613,18 +774,9 @@ function error(status, file){
  * Automatically called when page is loaded.
  * Can be used after that if needed as well.
  */
-function getEuroValue(){
+function getEuroValue(callback){
     let url = "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=EUR&apikey="+API_KEY;
-    xhttpRequest(setEuroValue, url, null);
-}
-
-/**
- * Never call this directly.
- * Gets called automatically by getEuroValue().
- */
-function setEuroValue(jsonObj){
-    console.log("Set euro value");
-    euroValue = jsonObj["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
+    xhttpRequest(callback, url, null);
 }
 
 //Generates unique ID

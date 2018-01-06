@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "chart.js": "^1.1.1",
     "react": "^16.2.0",
+    "react-chartjs": "^1.0.0",
     "react-dom": "^16.2.0",
+    "react-google-charts": "^1.5.5",
+    "react-linechart": "^1.1.12",
     "react-scripts": "1.0.17",
-    "react-table": "^6.7.5"
+    "react-table": "^6.7.6"
   },
   "scripts": {
     "start": "react-scripts start",
