@@ -16,8 +16,11 @@ let euroSymbol = "€";
 let dollarSymbol = "$";
 let euroValue = 0.83;
 let test = undefined;
-let debugAll = false;
 let disableButtons = false;
+
+//Debug booleans
+let debugAll = false;
+let debugGraph = false;
 
 //HOLY SPIRIT OF REACT
 //      -> INFORMATION FLOWS UP. NEVER FETCH. <-
@@ -62,11 +65,15 @@ class App extends Component {
         this.state = {
             portfolios: portfolios,
             jsPortfolios: jsPortfolios,
-            graph: undefined
+            graph: undefined,
+            graphLines: [],
+            graphLinesTotal: 0,
+            graphLinesCount: 0,
         }
-        getEuroValue(this.updateEuroValue.bind(this));
     }
     updateEuroValue(jsonObj){
+        console.log("updating euroValue");
+        console.log(jsonObj);
         euroValue = jsonObj["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
 
     }
@@ -80,31 +87,30 @@ class App extends Component {
         //Also since we update unit value we clearly have to update total_value if that exists?
     }
     componentDidMount(){
+        getEuroValue(this.updateEuroValue.bind(this));
         console.log("App did mount");
         let portfolios = [];
         let jsPortfolios = {};
         if(storageAvailable("localStorage")){
             //Check if there are any juicy localstorage portfolios
-            if(localStorage.portfolios !== undefined){
+            if(localStorage.jsPortfolios !== undefined){
                 console.log("Found existing list in local storage");
                 console.log(localStorage.jsPortfolios);
                 jsPortfolios = JSON.parse(localStorage.jsPortfolios);
-                if(jsPortfolios !== undefined){
-                    Object.keys(jsPortfolios).forEach(function(key){
-                        console.log("portofolio name: " + jsPortfolios[key].name);
-                        let portfolio = <Portfolio key={(jsPortfolios[key].id)}
-                                                   id={jsPortfolios[key].id}
-                                                   name={(jsPortfolios[key].name)}
-                                                   setGraph={this.setGraph.bind(this)}
-                                                   deletePortfolio={this.deletePortfolio.bind(this)}
-                                                   updatePortfolio={this.updatePortfolio.bind(this)}
-                                                   currency={jsPortfolios[key].currency}
-                                                   jsStocks={jsPortfolios[key].jsStocks}/>;
-                        portfolios.push(portfolio);
-                    }.bind(this));
-                    console.log("Found existing list in local storage");
-                    console.log(jsPortfolios);
-                }
+                Object.keys(jsPortfolios).forEach(function(key){
+                    console.log("portofolio name: " + jsPortfolios[key].name);
+                    let portfolio = <Portfolio key={(jsPortfolios[key].id)}
+                                               id={jsPortfolios[key].id}
+                                               name={(jsPortfolios[key].name)}
+                                               setGraph={this.setGraph.bind(this)}
+                                               deletePortfolio={this.deletePortfolio.bind(this)}
+                                               updatePortfolio={this.updatePortfolio.bind(this)}
+                                               currency={jsPortfolios[key].currency}
+                                               jsStocks={jsPortfolios[key].jsStocks}/>;
+                    portfolios.push(portfolio);
+                }.bind(this));
+                console.log("Found existing list in local storage");
+                console.log(jsPortfolios);
             }else{
                 //If there is no "portfolios" in local storage, put the empty list there
                 localStorage.portfolios = portfolios;
@@ -213,16 +219,20 @@ class App extends Component {
         let name = data[0];
         let jsStocks = data[1];
         let state = this.state;
-
+        state.cancelGraph = false;
+        state.graphName = name;
+        state.graphLines = [];
         let stockNames = [];
         //Grab names of the stocks
         Object.keys(jsStocks).forEach(function(key){
             let name = jsStocks[key].name;
-            console.log("Name: ",name);
+            if(debugAll || debugGraph)console.log("Name: ",name);
             if(!stockNames.indexOf(name) >= 0){ //If not in list add it
                 stockNames.push(jsStocks[key].name);
             }
         });
+        state.graphLineTotal = stockNames.length;
+        state.graphLinesCount = 0;
         //For each stock name get the data
         stockNames.forEach(function(name){
             let url = "https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol="+name+"&apikey="+API_KEY;
@@ -230,38 +240,67 @@ class App extends Component {
             console.log("Dun did request!");
         }.bind(this));
 
-        if(jsStocks === undefined || JSON.stringify(jsStocks) === JSON.stringify({})){
-            state.graph = undefined;
-        }else{
-            state.graph = <GraphWindow note={"Please wait while data is being fetched."} name={name} data={[]} closeGraph={this.closeGraph.bind(this)}/>;
-            disableButtons = true;
-        }
+        state.graph = <Loader/>;
+        disableButtons = true;
+        this.closeGraph();
         this.setState(state);
     }
     addGraphData(jsonObj){
-        console.log("Adding graph data");
-        console.log("Raw:");
-        console.log(jsonObj);
-        //For each point in time take that time and close value and create new JSON object like: {x: time, y: close} and add to list "points"
-        /**
-         * data= {
-                    name: {name}
-                    color: {random color}
-                    points: {points}
-                 }
-        */
+        if(!this.state.cancelGraph){
+            console.log("Adding graph data");
+            if(debugAll || debugGraph) {
+                console.log("Raw:");
+                console.log(jsonObj);
+            }
+            let symbol = jsonObj["Meta Data"]["2. Symbol"];
+            let timeSeries = jsonObj["Weekly Time Series"];
+            let color = getRandomColor();
+            let points = [];
+            let state = this.state;
+            state.graphLinesCount = state.graphLinesCount + 1;
+
+            let counter = 0;
+            Object.keys(timeSeries).forEach(function(key){
+                let date = key;
+                let close = timeSeries[date]["4. close"];
+                let jsPoint = {x: counter, y: parseFloat(close)};
+                points.push(jsPoint);
+                counter++;
+                if(debugAll || debugGraph) console.log(symbol, "close:", close);
+            });
+            points.reverse(); //Otherwise latest will be leftmost
+            state.graphLines.push({
+                name: symbol,
+                color: color,
+                points: points
+            });
+            console.log(state.graphLines);
+            state.graph = undefined;
+            state.graph = <GraphWindow name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
+            this.setState(state);
+        }
     }
+
     closeGraph(){
         let state = this.state;
         state.graph = undefined;
+        state.cancelGraph = true;
         disableButtons = false;
         this.setState(state);
     }
+
+    renderNow(){
+        console.log("Re-render app");
+        this.forceUpdate();
+    }
+
     render() {
         if(this.state.graph === undefined){
+            console.log("Drawing app with no graph");
             return (
                 <div className="App">
                     <div className="Header">
+                        <span>Stock portfolio Manager</span>
                         <Button function={this.addPortfolio.bind(this)}
                                 className="AddPortfolioButton" label="Add portfolio"/>
                     </div>
@@ -271,11 +310,9 @@ class App extends Component {
                 </div>
             );
         }else{
+            console.log("Drawing app with graph");
             return (
                 <div className="App">
-                    <div className="GraphContainer">
-                        {this.state.graph}
-                    </div>
                     <div className="BlurLayer">
                         <div className="Header">
                             <Button function={this.addPortfolio.bind(this)}
@@ -284,6 +321,9 @@ class App extends Component {
                         <div className="Portfolio_container col-11 col-m-11">
                             {this.state.portfolios}
                         </div>
+                    </div>
+                    <div className="GraphContainer">
+                        {this.state.graph}
                     </div>
                 </div>
             );
@@ -657,16 +697,18 @@ class Stock extends Component{
 }
 
 class GraphWindow extends Component{
-    renderGraph = undefined;
     constructor(props){
         super(props);
-        this.renderGraph = this.props.renderGraph;
+        this.renderNow = this.props.renderNow;
         this.closeGraphCallback = this.props.closeGraph;
         this.state = {
             name: this.props.name,
             data: this.props.data,
-            note: this.props.note,
         };
+    }
+    componentDidMount(){
+        console.log("New GraphWindow mounted!");
+        this.props.renderNow();
     }
     closeGraph(){
         this.closeGraphCallback();
@@ -678,21 +720,29 @@ class GraphWindow extends Component{
                     <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
                 </div>
                 <h1>{this.state.name}</h1>
-                <h4>{this.state.note}</h4>
                 <div className="GraphWindow">
-                    <LineChart>
+                    <LineChart
                         width={600}
                         height={400}
-                        xLabel={"Closing value"}
-                        yLabel={"Time"}
+                        xLabel={"Time"}
+                        yLabel={"Closing value"}
                         data={this.state.data}
-                    </LineChart>
+                        hidePoints={true}
+                    />
                 </div>
             </div>
         );
+
     }
 }
-
+function getRandomColor() {
+    var letters = '23456789ABCD';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 12)];
+    }
+    return color;
+}
 /**
  * A custom button
  */
@@ -725,6 +775,18 @@ class ClickableImage extends Component{
         return(
             <img className="ClickableImage" src={this.props.src}/>
         );
+    }
+}
+
+class Loader extends Component {
+    constructor(props){
+        super(props);
+    }
+    render(){
+        console.log("BELTA LOADA!");
+        return(
+            <div className={"loader"}/>
+        )
     }
 }
 

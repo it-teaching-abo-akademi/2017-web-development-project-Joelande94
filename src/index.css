@@ -19,7 +19,6 @@ body {
     width: 91.66%;
 }
 @media only screen and (min-width: 300px) {
-    /* For tablets: */
     .col-mm-1 {width: 8.33%;}
     .col-mm-2 {width: 16.66%;}
     .col-mm-3 {width: 25%;}
@@ -33,6 +32,7 @@ body {
     .col-mm-11 {width: 91.66%;}
     .col-mm-12 {width: 100%;
         font-size: 80%;}
+    .Portfolio_container{margin-top: 45%;}
 }
 @media only screen and (min-width: 600px) {
     /* For tablets: */
@@ -48,6 +48,7 @@ body {
     .col-m-10 {width: 83.33%;}
     .col-m-11 {width: 91.66%;}
     .col-m-12 {width: 100%;}
+    .Portfolio_container{margin-top: 20%;}
 }
 @media only screen and (min-width: 768px) {
     /* For desktop: */
@@ -63,5 +64,6 @@ body {
     .col-10 {width: 83.33%;}
     .col-11 {width: 91.66%;}
     .col-12 {width: 100%;}
+    .Portfolio_container{margin-top: 7%;}
 }
 /*	End of grid setup	*/
