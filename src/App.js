@@ -21,7 +21,7 @@ let disableButtons = false;
 
 //Debug booleans
 let debugAll = false;
-let debugGraph = true;
+let debugGraph = false;
 let debugDiffDays = false;
 
 //HOLY SPIRIT OF REACT
@@ -225,8 +225,6 @@ class App extends Component {
         }
     }
     setPrompt(prompt){
-        console.log("Setting prompt");
-        console.log(prompt);
         let state = this.state;
         state.prompt = prompt;
         this.setState(state);
@@ -235,7 +233,6 @@ class App extends Component {
         let name = data[0];
         let jsStocks = data[1];
         let intervalInfo = data[2];
-        console.log("Interval:",intervalInfo);
         let state = this.state;
         state.intervalStart = intervalInfo[0];
         state.intervalEnd = intervalInfo[1];
@@ -248,31 +245,30 @@ class App extends Component {
         //Grab names of the stocks
         Object.keys(jsStocks).forEach(function(key){
             let name = jsStocks[key].name;
-            console.log("Stock name:",name);
-            if(debugAll || debugGraph)console.log("Name: ",name);
-            if(!stockNames.indexOf(name) >= 0){ //If not in list add it
-                stockNames.push(jsStocks[key].name);
-            }
+            if(debugAll || debugGraph || true) console.log("Stock symbol: ",name);
         });
         state.graphLinesTotal = stockNames.length;
         state.graphLinesCount = 0;
         this.setState(state);
         let intervalSize = daysDifference(state.intervalStart, state.intervalEnd);
+        let done = [];
         //For each stock name get the data
         stockNames.forEach(function(name){
-            let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=compact&apikey=" + API_KEY;
-            state.intervalType = "day";
-            if(intervalSize > 150) {
-                //150 (as opposed to 100 which is the amount of days you get with "compact" in the api call)
-                // because I'm too lazy to count 5/7 and holidays and downtime and blah blah blah
-                url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=full&apikey=" + API_KEY;
-            }else if(intervalSize === 0){
-                state.intervalType = "intraday";
-                //intraday 15 min interval; compact because there's only 96 15min intervals in a day.
-                url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol="+name+"&interval=15min&outputsize=compact&apikey=" + API_KEY;
+            if(!done.indexOf(name) >= 0){ //If not in list add it
+                let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=compact&apikey=" + API_KEY;
+                state.intervalType = "day";
+                if(intervalSize > 100) {
+                    //150 (as opposed to 100 which is the amount of days you get with "compact" in the api call)
+                    // because I'm too lazy to count 5/7 and holidays and downtime and blah blah blah
+                    url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=full&apikey=" + API_KEY;
+                }else if(intervalSize === 0){
+                    state.intervalType = "intraday";
+                    //intraday 15 min interval; compact because there's only 96 15min intervals in a day.
+                    url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol="+name+"&interval=15min&outputsize=compact&apikey=" + API_KEY;
+                }
+                xhttpRequest(this.addGraphData.bind(this), url, null);
+                done.push(name);
             }
-            xhttpRequest(this.addGraphData.bind(this), url, null);
-            console.log("Dun did request!");
         }.bind(this));
         state.graph = <div>
                           <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
@@ -290,6 +286,12 @@ class App extends Component {
                 console.log("Raw:");
                 console.log(jsonObj);
             }
+            if(jsonObj["Meta Data"] === undefined){
+                alert("Failed to fetch graph data, the API is likely under heavy use at the moment. Please try again.");
+                state.graph = undefined;
+                this.setState(state);
+                return;
+            }
             let symbol = jsonObj["Meta Data"]["2. Symbol"];
             let timeSeries = null;
             if(state.intervalType === "day"){
@@ -297,10 +299,7 @@ class App extends Component {
             }else{
                 timeSeries = jsonObj["Time Series (15min)"];
             }
-            if(timeSeries === undefined){
-                alert("Failed to fetch graph data, the API is likely under heavy use at the moment.\n Please close the graph window and try again.")
-                return;
-            }
+
             let color = getRandomColor();
             let points = [];
             state.graphLinesCount = state.graphLinesCount + 1;
@@ -311,22 +310,17 @@ class App extends Component {
             console.log("Before loop endDate: " + state.intervalEnd);
             //For each value in the time series, get the date and the closing value and make a JSON point of it.
             //Then add that point to the list of points.
+            let counter = 1;
             Object.keys(timeSeries).forEach(function(key){
                 let date = key;
                 let startDiff = daysDifference(date, state.intervalStart);
                 let endDiff = daysDifference(state.intervalEnd, date);
-                console.log("------------");
-                console.log("date:",date);
-                console.log("startDiff:", startDiff);
-                console.log("endDiff:", endDiff);
-                console.log("------------");
 
                 //Check if it's within the interval
                 if(state.intervalType === "day"){
-                    if(startDiff > 0 && endDiff < 0){
-                        console.log("NOT ADDING");
+                    if(startDiff > 0 || endDiff > 0){
+                        //Not adding
                     }else{
-                        console.log("ADDING");
                         let close = timeSeries[key]["4. close"];
                         let jsPoint = {x: date, y: parseFloat(close)};
                         points.push(jsPoint);
@@ -335,10 +329,10 @@ class App extends Component {
                 }else{
                     //Intraday stuff has to be same day but since we fetch more 15 min intervals than fit in a day
                     // there will also be other days included so we better remove those.
-                    console.log("ADDING");
                     let close = timeSeries[key]["4. close"];
-                    let jsPoint = {x: date, y: parseFloat(close)};
+                    let jsPoint = {x: counter, y: parseFloat(close)};
                     points.push(jsPoint);
+                    counter++;
                     if(debugAll || debugGraph) console.log(symbol, "close:", close);
                 }
 
@@ -357,7 +351,7 @@ class App extends Component {
             //Only create the graph when the final value has arrived.
             if(state.graphLinesCount === state.graphLinesTotal){
                 state.graph = undefined;
-                state.graph = <GraphWindow interval={this.state.intervalStart + " - " + this.state.intervalEnd} name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
+                state.graph = <GraphWindow interval={this.state.intervalStart + " - " + this.state.intervalEnd} intervalType={this.state.intervalType} name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
             }
             this.setState(state);
         }
@@ -385,11 +379,14 @@ class App extends Component {
                     <div className="App">
                         <div className="BlurLayer">
                             <div className="Header">
-                                <span>Stock portfolio Manager</span>
+                                <div className={"Header-title"}>
+                                    <span>Stock portfolio Manager</span>
+                                </div>
                                 <Button function={this.addPortfolio.bind(this)}
                                         className="AddPortfolioButton" label="Add portfolio"/>
                             </div>
-                            <div className="Portfolio_container col-11 col-m-11">
+                            <div className={"Spacer"}/>
+                            <div className="Portfolio_container col-11 col-m-11 clearfix">
                                 {this.state.portfolios}
                             </div>
                         </div>
@@ -404,11 +401,14 @@ class App extends Component {
                 return (
                     <div className="App">
                         <div className="Header">
-                            <span>Stock portfolio Manager</span>
+                            <div className={"Header-title"}>
+                                <span>Stock portfolio Manager</span>
+                            </div>
                             <Button function={this.addPortfolio.bind(this)}
                                     className="AddPortfolioButton" label="Add portfolio"/>
                         </div>
-                        <div className="Portfolio_container col-11 col-m-11">
+                        <div className={"Spacer"}/>
+                        <div className="Portfolio_container col-11 col-m-11 clearfix">
                             {this.state.portfolios}
                         </div>
                     </div>
@@ -421,11 +421,14 @@ class App extends Component {
                 <div className="App">
                     <div className="BlurLayer">
                         <div className="Header">
-                            <span>Stock portfolio Manager</span>
+                            <div className={"Header-title"}>
+                                <span>Stock portfolio Manager</span>
+                            </div>
                             <Button function={this.addPortfolio.bind(this)}
                                     className="AddPortfolioButton" label="Add portfolio"/>
                         </div>
-                        <div className="Portfolio_container col-11 col-m-11">
+                        <div className={"Spacer"}/>
+                        <div className="Portfolio_container col-11 col-m-11 clearfix">
                             {this.state.portfolios}
                         </div>
                     </div>
@@ -618,7 +621,7 @@ class Portfolio extends Component {
                 getcurrency={getcurr}
                 key={id}
                 id={id}
-                name={stock.name}
+                name={stock.name.toUpperCase()}
                 unit_value={unit_value}
                 quantity={stock.quantity}
                 renderNow={this.renderNow.bind(this)}/>);
@@ -759,7 +762,7 @@ class Portfolio extends Component {
                             Total value: <label className="totalPortfolioValue">{this.state.total_value}{currencySymbol}</label>
                         </p>
                         <Button function={this.addStock.bind(this)} className="Portfolio-footer-addStockButton" label="Add stock"/>
-                        <Button function={this.perfGraph.bind(this)} className="Portfolio-footer-perfGraphButton" label="Perf. graph"/>
+                        <Button function={this.perfGraph.bind(this)} className="Portfolio-footer-perfGraphButton" label="Performance graph"/>
                         <Button function={this.removeSelected.bind(this)} className="Portfolio-footer-removeStockButton" label="Remove selected"/>
                     </div>
                 </div>
@@ -777,7 +780,7 @@ class Stock extends Component{
             id: this.props.id,
             updateSelected: this.props.updateSelected,
             getcurrency: this.props.getcurrency,
-            name: this.props.name,
+            name: this.props.name.toUpperCase(),
             unit_value: this.props.unit_value,
             quantity: this.props.quantity,
             total_value: (parseFloat(this.props.unit_value)*parseFloat(this.props.quantity)).toFixed(2),
@@ -807,11 +810,11 @@ class Stock extends Component{
         //console.log(this.state.getcurrency());
         return(
             <tr>
-                <td>{this.state.name.toUpperCase()}</td>
-                <td>{this.state.unit_value}</td>
-                <td>{this.state.quantity}</td>
-                <td>{this.state.total_value}</td>
-                <td><input type='checkbox' onChange={this.onChange.bind(this)} checked={this.state.selected} value={this.key}/></td>
+                <td><div className="after">{this.state.name.toUpperCase()}</div></td>
+                <td><div className="after">{this.state.unit_value}</div></td>
+                <td><div className="after">{this.state.quantity}</div></td>
+                <td><div className="after">{this.state.total_value}</div></td>
+                <td><div className="after"><input type='checkbox' onChange={this.onChange.bind(this)} checked={this.state.selected} value={this.key}/></div></td>
             </tr>
         );
     }
@@ -823,10 +826,12 @@ class GraphWindow extends Component{
         this.renderNow = this.props.renderNow;
         this.closeGraphCallback = this.props.closeGraph;
         //todo Determine what xDisplay function to use and add it to state.
+
         this.state = {
             name: this.props.name,
             data: this.props.data,
-            interval: this.props.interval
+            interval: this.props.interval,
+            intervalType: this.props.intervalType
         };
     }
     componentDidMount(){
@@ -837,37 +842,68 @@ class GraphWindow extends Component{
         this.closeGraphCallback();
     }
     render(){
-        return (
-            <div>
-                <div className="GraphWindowHeader">
-                    <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+        if(this.props.intervalType === "day"){
+            return (
+                <div>
+                    <div className="GraphWindowHeader">
+                        <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+                    </div>
+                    <h1>{this.state.name}</h1>
+                    <h3>Performance graph ({this.state.interval})</h3>
+                    <h3>{"Daily"}</h3>
+                    <div className="GraphWindow">
+                        <LineChart
+                            width={800}
+                            height={400}
+                            xLabel={"Time"}
+                            yLabel={"Closing value (USD)"}
+                            data={this.state.data}
+                            hidePoints={true}
+                            pointRadius={0.5}
+                            showLegends={true}
+                            isDate={true}
+                            xDisplay={getDate}
+                        />
+                    </div>
                 </div>
-                <h1>{this.state.name}</h1>
-                <h3>Performance graph ({this.state.interval})</h3>
-                <div className="GraphWindow">
-                    <LineChart
-                        width={800}
-                        height={400}
-                        xLabel={"Time"}
-                        yLabel={"Closing value (USD)"}
-                        data={this.state.data}
-                        hidePoints={true}
-                        pointRadius={0.5}
-                        showLegends={true}
-                        isDate={true}
-                        xDisplay={getYear}
-                    />
+            );
+        }else{
+            return (
+                <div>
+                    <div className="GraphWindowHeader">
+                        <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+                    </div>
+                    <h1>{this.state.name}</h1>
+                    <h3>Performance graph ({this.state.interval})</h3>
+                    <h3>{"Intraday"}</h3>
+                    <div className="GraphWindow">
+                        <LineChart
+                            width={800}
+                            height={400}
+                            xLabel={"Point"}
+                            yLabel={"Closing value (USD)"}
+                            data={this.state.data}
+                            hidePoints={true}
+                            pointRadius={0.5}
+                            showLegends={true}
+                            isDate={false}
+                            xDisplay={null}
+                        />
+                    </div>
                 </div>
-            </div>
-        );
+            );
+        }
+
 
     }
 }
 function getYear(info){
-    return info.getFullYear();
+    return (info.getMonth()+1)+"/"+info.getFullYear();
 }
 function getDate(info){
-    return info.getFullYear()+"/"+info.getMonth()+"/"+info.getDay();
+    console.log("Month: " + info.getMonth());
+    console.log("Day: "+ info.getDay());
+    return parseInt(info.getDay())+1+"/"+(info.getMonth()+1);
 }
 function getRandomColor() {
     var letters = '23456789ABCD';
@@ -986,7 +1022,6 @@ class Loader extends Component {
         super(props);
     }
     render(){
-        console.log("BELTA LOADA!");
         return(
             <div className={"loader"}/>
         )
@@ -996,7 +1031,7 @@ class Loader extends Component {
 function daysDifference(start, end){
     let startDate = new Date(start);
     let endDate = new Date(end);
-    var timeDiff = Math.abs(endDate.getTime() - startDate.getTime());
+    var timeDiff = endDate.getTime() - startDate.getTime();
     var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
     if(debugAll || debugDiffDays){
@@ -1004,9 +1039,6 @@ function daysDifference(start, end){
         console.log("startDate:", startDate);
         console.log("endDate:", endDate);
         console.log("Days difference: " + diffDays);
-    }
-    if(diffDays < 0){
-        console.log("IT'S NEGATIVE YO!");
     }
     return diffDays;
 }

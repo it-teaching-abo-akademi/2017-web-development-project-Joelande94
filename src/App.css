@@ -1,31 +1,50 @@
 .Header {
     position: fixed;
     width: 100%;
+    min-height: 5em;
+    max-height: 11em;
     background-color: #3498db;
     z-index: 1;
     top: 0;
-}
-.Header span{
-    margin-left: 30%;
-    margin-top: 2%;
-    text-align: center;
-    color: white;
-    font-size: 2em;
-}
-h1, h3, h4 {
     text-align: center;
 }
 .Header button {
     margin-top: 2%;
-    margin-left: 5%;
-    margin-bottom: 2%;
+    margin-bottom: 1%;
+    -moz-box-shadow:    3px 3px 3px #3458db;
+    -webkit-box-shadow: 3px 3px 3px #3458db;
+    box-shadow:         3px 3px 3px #3458db;
+}
+.Header-title{
+     margin-top: auto;
+     overflow: hidden;
+     text-align: center;
+ }
+.Header span{
+    text-align: center;
+    color: white;
+    font-size: 2em;
+    display: inline-block;
+    margin: 10px 10px 0 0;
+    padding: 5px 10px;
+}
+
+h1, h3, h4 {
+    text-align: center;
 }
 button {
     -moz-box-shadow:    3px 3px 3px #ccc;
     -webkit-box-shadow: 3px 3px 3px #ccc;
     box-shadow:         3px 3px 3px #ccc;
 }
-
+.Spacer{
+    height: 10em;
+}
+.Portfolio_container {
+    width: 80%;
+    margin-left: 10%;
+    margin-right: 10%;
+}
 .Portfolio {
     position: relative;
     min-height: 20em;
@@ -239,3 +258,49 @@ tr:nth-child(even){background-color: #d3d3d3}
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/*Fixes strange 0px height of div "bug" caused by floating children.*/
+.clearfix:after {
+    content: ".";
+    display: block;
+    clear: both;
+    visibility: hidden;
+    line-height: 0;
+    height: 0;
+}
+
+.clearfix {
+    display: inline-block;
+}
+
+html[xmlns] .clearfix {
+    display: block;
+}
+
+* html .clearfix {
+    height: 1%;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
