@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 /*Own imports*/
-import sort_logo from './updown_arrow.png';
-
 import LineChart from 'react-linechart'; //npm install react-linechart --save
 import '../node_modules/react-linechart/dist/styles.css';
 
+import DatePicker from 'react-datepicker'; //npm install react-datepicker --save
+import moment from 'moment'; //npm install moment --save
+
+import 'react-datepicker/dist/react-datepicker.css';
 
 
 let API_KEY = "CXOK71OQTSO3FIY7";
@@ -20,7 +21,8 @@ let disableButtons = false;
 
 //Debug booleans
 let debugAll = false;
-let debugGraph = false;
+let debugGraph = true;
+let debugDiffDays = false;
 
 //HOLY SPIRIT OF REACT
 //      -> INFORMATION FLOWS UP. NEVER FETCH. <-
@@ -31,7 +33,6 @@ let debugGraph = false;
  *      Addition: fetch new value for each stock when loading page.
  * New euro value is currently not used when fetching from localStorage
  *      because localStorage is faster than the response for the eurovalue
- * Make the buttons appear in the right positions
  *
  * Todo feature
  * Sorting
@@ -41,8 +42,10 @@ let debugGraph = false;
  * Todo bonus
  * Enable cryptos.
  * Slide portfolio up and leave only bar to be able to slide it down again.
+ * Make the buttons appear in the right positions
  *
  * Todo dun did
+ * Date picker for performance graph
  * Add portfolio
  * Add stock
  * Total value is currently NaN€ instead of 0€*
@@ -74,7 +77,11 @@ class App extends Component {
     updateEuroValue(jsonObj){
         console.log("updating euroValue");
         console.log(jsonObj);
-        euroValue = jsonObj["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
+        if(jsonObj["Realtime Currency Exchange Rate"] !== undefined){
+            euroValue = jsonObj["Realtime Currency Exchange Rate"]["5. Exchange Rate"];
+        }else{
+            console.log("failed to fetch eurovalue");
+        }
     }
 
     /**
@@ -104,6 +111,7 @@ class App extends Component {
                                                setGraph={this.setGraph.bind(this)}
                                                deletePortfolio={this.deletePortfolio.bind(this)}
                                                updatePortfolio={this.updatePortfolio.bind(this)}
+                                               setPrompt={this.setPrompt.bind(this)}
                                                currency={jsPortfolios[key].currency}
                                                jsStocks={jsPortfolios[key].jsStocks}/>;
                     portfolios.push(portfolio);
@@ -201,7 +209,9 @@ class App extends Component {
                                        name={name}
                                        setGraphApp={this.setGraph.bind(this)}
                                        updatePortfolio={this.updatePortfolio.bind(this)}
-                                       deletePortfolio={this.deletePortfolio.bind(this)}/>);
+                                       deletePortfolio={this.deletePortfolio.bind(this)}
+                                       setPrompt={this.setPrompt.bind(this)}
+            />);
             state.portfolios = portfolios;
             jsPortfolios[id] = {
                 key: id,
@@ -214,17 +224,31 @@ class App extends Component {
             this.updateLocalStorage();
         }
     }
+    setPrompt(prompt){
+        console.log("Setting prompt");
+        console.log(prompt);
+        let state = this.state;
+        state.prompt = prompt;
+        this.setState(state);
+    }
     setGraph(data){
         let name = data[0];
         let jsStocks = data[1];
+        let intervalInfo = data[2];
+        console.log("Interval:",intervalInfo);
         let state = this.state;
+        state.intervalStart = intervalInfo[0];
+        state.intervalEnd = intervalInfo[1];
         state.cancelGraph = false;
         state.graphName = name;
         state.graphLines = [];
         let stockNames = [];
+
+        //todo currently adds same symbol multiple times.
         //Grab names of the stocks
         Object.keys(jsStocks).forEach(function(key){
             let name = jsStocks[key].name;
+            console.log("Stock name:",name);
             if(debugAll || debugGraph)console.log("Name: ",name);
             if(!stockNames.indexOf(name) >= 0){ //If not in list add it
                 stockNames.push(jsStocks[key].name);
@@ -233,44 +257,96 @@ class App extends Component {
         state.graphLinesTotal = stockNames.length;
         state.graphLinesCount = 0;
         this.setState(state);
+        let intervalSize = daysDifference(state.intervalStart, state.intervalEnd);
         //For each stock name get the data
         stockNames.forEach(function(name){
-            let url = "https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol="+name+"&apikey="+API_KEY;
+            let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=compact&apikey=" + API_KEY;
+            state.intervalType = "day";
+            if(intervalSize > 150) {
+                //150 (as opposed to 100 which is the amount of days you get with "compact" in the api call)
+                // because I'm too lazy to count 5/7 and holidays and downtime and blah blah blah
+                url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=full&apikey=" + API_KEY;
+            }else if(intervalSize === 0){
+                state.intervalType = "intraday";
+                //intraday 15 min interval; compact because there's only 96 15min intervals in a day.
+                url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol="+name+"&interval=15min&outputsize=compact&apikey=" + API_KEY;
+            }
             xhttpRequest(this.addGraphData.bind(this), url, null);
             console.log("Dun did request!");
         }.bind(this));
-        state.graph = <div><Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/><Loader/></div>;
+        state.graph = <div>
+                          <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+                          <Loader/>
+                      </div>;
         disableButtons = true;
         this.setState(state);
     }
     addGraphData(jsonObj){
         //If the client hasn't pressed the X to cancel the graph, then do the following.
         if(!this.state.cancelGraph){
+            let state = this.state;
             console.log("Adding graph data");
             if(debugAll || debugGraph) {
                 console.log("Raw:");
                 console.log(jsonObj);
             }
             let symbol = jsonObj["Meta Data"]["2. Symbol"];
-            let timeSeries = jsonObj["Weekly Time Series"];
+            let timeSeries = null;
+            if(state.intervalType === "day"){
+                timeSeries = jsonObj["Time Series (Daily)"];
+            }else{
+                timeSeries = jsonObj["Time Series (15min)"];
+            }
+            if(timeSeries === undefined){
+                alert("Failed to fetch graph data, the API is likely under heavy use at the moment.\n Please close the graph window and try again.")
+                return;
+            }
             let color = getRandomColor();
             let points = [];
-            let state = this.state;
             state.graphLinesCount = state.graphLinesCount + 1;
+            console.log("Time series:");
+            console.log(timeSeries);
 
+
+            console.log("Before loop endDate: " + state.intervalEnd);
             //For each value in the time series, get the date and the closing value and make a JSON point of it.
             //Then add that point to the list of points.
             Object.keys(timeSeries).forEach(function(key){
                 let date = key;
-                let close = timeSeries[key]["4. close"];
-                let jsPoint = {x: date, y: parseFloat(close)};
-                points.push(jsPoint);
-                if(debugAll || debugGraph) console.log(symbol, "close:", close);
+                let startDiff = daysDifference(date, state.intervalStart);
+                let endDiff = daysDifference(state.intervalEnd, date);
+                console.log("------------");
+                console.log("date:",date);
+                console.log("startDiff:", startDiff);
+                console.log("endDiff:", endDiff);
+                console.log("------------");
+
+                //Check if it's within the interval
+                if(state.intervalType === "day"){
+                    if(startDiff > 0 && endDiff < 0){
+                        console.log("NOT ADDING");
+                    }else{
+                        console.log("ADDING");
+                        let close = timeSeries[key]["4. close"];
+                        let jsPoint = {x: date, y: parseFloat(close)};
+                        points.push(jsPoint);
+                        if(debugAll || debugGraph) console.log(symbol, "close:", close);
+                    }
+                }else{
+                    //Intraday stuff has to be same day but since we fetch more 15 min intervals than fit in a day
+                    // there will also be other days included so we better remove those.
+                    console.log("ADDING");
+                    let close = timeSeries[key]["4. close"];
+                    let jsPoint = {x: date, y: parseFloat(close)};
+                    points.push(jsPoint);
+                    if(debugAll || debugGraph) console.log(symbol, "close:", close);
+                }
+
             });
             points.reverse();
             //Push this line to the list of graph lines in state.
             state.graphLines.push({
-                name: symbol,
+                name: symbol.toUpperCase(),
                 color: color,
                 points: points
             });
@@ -281,7 +357,7 @@ class App extends Component {
             //Only create the graph when the final value has arrived.
             if(state.graphLinesCount === state.graphLinesTotal){
                 state.graph = undefined;
-                state.graph = <GraphWindow name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
+                state.graph = <GraphWindow interval={this.state.intervalStart + " - " + this.state.intervalEnd} name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
             }
             this.setState(state);
         }
@@ -302,20 +378,44 @@ class App extends Component {
 
     render() {
         if(this.state.graph === undefined){
-            console.log("Drawing app with no graph");
-            return (
-                <div className="App">
-                    <div className="Header">
-                        <span>Stock portfolio Manager</span>
-                        <Button function={this.addPortfolio.bind(this)}
-                                className="AddPortfolioButton" label="Add portfolio"/>
+            if(this.state.prompt !== undefined){
+                //There's a prompt
+                console.log("Drawing app with prompt");
+                return (
+                    <div className="App">
+                        <div className="BlurLayer">
+                            <div className="Header">
+                                <span>Stock portfolio Manager</span>
+                                <Button function={this.addPortfolio.bind(this)}
+                                        className="AddPortfolioButton" label="Add portfolio"/>
+                            </div>
+                            <div className="Portfolio_container col-11 col-m-11">
+                                {this.state.portfolios}
+                            </div>
+                        </div>
+                        <div>
+                            {this.state.prompt}
+                        </div>
                     </div>
-                    <div className="Portfolio_container col-11 col-m-11">
-                        {this.state.portfolios}
+                );
+            }else{
+                //There is no prompt and no graph
+                console.log("Drawing app with no graph");
+                return (
+                    <div className="App">
+                        <div className="Header">
+                            <span>Stock portfolio Manager</span>
+                            <Button function={this.addPortfolio.bind(this)}
+                                    className="AddPortfolioButton" label="Add portfolio"/>
+                        </div>
+                        <div className="Portfolio_container col-11 col-m-11">
+                            {this.state.portfolios}
+                        </div>
                     </div>
-                </div>
-            );
+                );
+            }
         }else{
+            //There is a graph.
             console.log("Drawing app with graph");
             return (
                 <div className="App">
@@ -438,8 +538,18 @@ class Portfolio extends Component {
     }
     perfGraph(){
         console.log("Show performance graph!");
-        let state = this.state;
-        this.setGraph([this.state.name, state.jsStocks]);
+        this.props.setPrompt(<IntervalPrompt callBack={this.intervalPromptCallback.bind(this)}/>);
+    }
+    intervalPromptCallback(info){
+        if(info === "close"){
+            this.props.setPrompt(undefined);
+        }else{
+            this.props.setPrompt(undefined);
+            let state = this.state;
+            //Send intervals with the other info in setGraph. Then in setGraph(actually in addGraph),
+            //remove all objects outside of interval
+            this.setGraph([this.state.name, state.jsStocks, info]);
+        }
     }
     deletePortfolio(){
         let input = window.confirm("Are you sure you want to delete this portfolio?");
@@ -712,9 +822,11 @@ class GraphWindow extends Component{
         super(props);
         this.renderNow = this.props.renderNow;
         this.closeGraphCallback = this.props.closeGraph;
+        //todo Determine what xDisplay function to use and add it to state.
         this.state = {
             name: this.props.name,
             data: this.props.data,
+            interval: this.props.interval
         };
     }
     componentDidMount(){
@@ -731,6 +843,7 @@ class GraphWindow extends Component{
                     <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
                 </div>
                 <h1>{this.state.name}</h1>
+                <h3>Performance graph ({this.state.interval})</h3>
                 <div className="GraphWindow">
                     <LineChart
                         width={800}
@@ -738,11 +851,11 @@ class GraphWindow extends Component{
                         xLabel={"Time"}
                         yLabel={"Closing value (USD)"}
                         data={this.state.data}
-                        hidePoints={false}
+                        hidePoints={true}
                         pointRadius={0.5}
                         showLegends={true}
                         isDate={true}
-                        xDisplay={dateYearly}
+                        xDisplay={getYear}
                     />
                 </div>
             </div>
@@ -750,8 +863,11 @@ class GraphWindow extends Component{
 
     }
 }
-function dateYearly(info){
+function getYear(info){
     return info.getFullYear();
+}
+function getDate(info){
+    return info.getFullYear()+"/"+info.getMonth()+"/"+info.getDay();
 }
 function getRandomColor() {
     var letters = '23456789ABCD';
@@ -785,10 +901,79 @@ class Button extends Component {
     }
 }
 
+class IntervalPrompt extends Component {
+    constructor(props){
+        super(props);
+        let today = moment();
+        //todo Apparently this doesn't work atm [endDate and startDate is the same in prompt]
+
+        this.state = {
+            startDate: today,
+            endDate: today,
+        };
+    }
+    callback(e){
+        console.log("Pressed ok in prompt!");
+        console.log(e);
+        let startDate = this.state.startDate.format("YYYY-MM-DD");
+        let endDate = this.state.endDate.format("YYYY-MM-DD");
+        console.log("startDate: " + startDate + " endDate: " + endDate);
+        this.props.callBack([startDate, endDate]);
+    }
+    handleStartChange(date) {
+        let state = this.state;
+        if(date>state.endDate){
+            alert("Start date can not be after end date");
+            this.forceUpdate();
+        }else{
+            state.startDate = date;
+            this.setState(state);
+        }
+    }
+    handleEndChange(date) {
+        let state = this.state;
+        if(date<state.endDate){
+            alert("End date can not be before start date");
+            this.forceUpdate();
+        }else{
+            state.endDate = date;
+            this.setState(state);
+        }
+    }
+    closePrompt(){
+        console.log("closing prompt");
+        this.props.callBack("close");
+    }
+    render(){
+        return(
+            <div className="IntervalPrompt">
+                <Button className={"closePromptButton"} function={this.closePrompt.bind(this)} label={"X"}/>
+                <div className="IntervalPrompt-inner">
+                    <br/>
+                    <br/>
+                    <span>Pick start date</span>
+                    <DatePicker
+                        selected={this.state.startDate}
+                        onChange={this.handleStartChange.bind(this)}
+                    />
+                    <br/>
+                    <span>Pick end date</span>
+                    <DatePicker
+                        selected={this.state.endDate}
+                        onChange={this.handleEndChange.bind(this)}
+                    />
+                    <br/>
+                    <Button function={this.callback.bind(this)} value={"ok"} label={"Ok"}/>
+                </div>
+            </div>
+        );
+
+    }
+}
 /**
  * An image that you can click
  */
-class ClickableImage extends Component{
+class ClickableImage extends Component {
     render(){
         return(
             <img className="ClickableImage" src={this.props.src}/>
@@ -807,6 +992,25 @@ class Loader extends Component {
         )
     }
 }
+
+function daysDifference(start, end){
+    let startDate = new Date(start);
+    let endDate = new Date(end);
+    var timeDiff = Math.abs(endDate.getTime() - startDate.getTime());
+    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    if(debugAll || debugDiffDays){
+        console.log("In daysDifference");
+        console.log("startDate:", startDate);
+        console.log("endDate:", endDate);
+        console.log("Days difference: " + diffDays);
+    }
+    if(diffDays < 0){
+        console.log("IT'S NEGATIVE YO!");
+    }
+    return diffDays;
+}
+
 
 /**
  * Get stock data from alphavantage API

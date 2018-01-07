@@ -12,7 +12,7 @@
     color: white;
     font-size: 2em;
 }
-h1, h4 {
+h1, h3, h4 {
     text-align: center;
 }
 .Header button {
@@ -178,7 +178,7 @@ tr:nth-child(even){background-color: #d3d3d3}
     border: 1px solid gray;
     min-width: 900px;
     min-height: 600px;
-    z-index: 2;
+    z-index: 3;
     -moz-box-shadow:    3px 3px 3px #ccc;
     -webkit-box-shadow: 3px 3px 3px #ccc;
     box-shadow:         3px 3px 3px #ccc;
@@ -188,11 +188,12 @@ tr:nth-child(even){background-color: #d3d3d3}
     margin-left: 5%;
 }
 .BlurLayer {
+    position: absolute;
     width: 100%;
     height: 100%;
     -webkit-filter: blur(5px);
     filter: blur(5px);
-    z-index: 1;
+    z-index: 3;
 }
 .CloseGraphButton {
     /*Margins are not working!*/
@@ -212,6 +213,20 @@ tr:nth-child(even){background-color: #d3d3d3}
     height: 120px;
     -webkit-animation: spin 2s linear infinite; /* Safari */
     animation: spin 2s linear infinite;
+}
+.IntervalPrompt{
+    position: absolute;
+    z-index: 4;
+    border: 1px lightgrey solid;
+    width: 30%;
+    height: 25%;
+    background-color: white;
+    margin-left: 36%;
+    margin-top: 20%;
+}
+.IntervalPrompt-inner{
+    position: relative;
+    margin-left: 20%;
 }
 
 /* Safari */
