@@ -90,3 +90,7 @@ only screen and (max-width: 760px),
     }
 }
 /*	End of grid setup	*/
+
+.iconCredit{
+    text-align: center;
+}

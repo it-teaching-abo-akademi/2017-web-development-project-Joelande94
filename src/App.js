@@ -11,40 +11,46 @@ import moment from 'moment'; //npm install moment --save
 import 'react-datepicker/dist/react-datepicker.css';
 
 
+
 let API_KEY = "CXOK71OQTSO3FIY7";
 let currency = "euro";
 let euroSymbol = "€";
 let dollarSymbol = "$";
 let euroValue = 0.83;
-let test = undefined;
 let disableButtons = false;
+let MAX_STOCKS = 50;
 
 //Debug booleans
 let debugAll = false;
 let debugGraph = false;
 let debugDiffDays = false;
+let debugAppRender = false;
+let debugUpdateUnitValue = false;
+let debugSorting = true;
 
-//HOLY SPIRIT OF REACT
+//               HOLY SPIRIT OF REACT
 //      -> INFORMATION FLOWS UP. NEVER FETCH. <-
 
 /**Todo fix
- * Currency switcher doesn't work inside the table. Only on total value.
- * Currently stock value is only fetched once and stays the same.
- *      Addition: fetch new value for each stock when loading page.
  * New euro value is currently not used when fetching from localStorage
  *      because localStorage is faster than the response for the eurovalue
+ *      Idea: always push latest euroValue to localStorage.
  *
  * Todo feature
  * Sorting
- * Performance graph. (Prompt which interval when clicking it? Radio buttons for intervals?
- *      Straight up fetch daily, weekly, monthly, yearly or all time from API.)
  *
  * Todo bonus
- * Enable cryptos.
- * Slide portfolio up and leave only bar to be able to slide it down again.
  * Make the buttons appear in the right positions
  *
+ * Todo should work...
+ * Currently stock value is only fetched once and stays the same.
+ *      Addition: fetch new value for each stock when loading page.
+ *      Idea: keep track of all used unit values as JSON object: [{name: "MSFT", unit_value: 13.37}, {name: "AAPL", unit_value: 0.01}, etc.]
+ * Currency switcher doesn't work inside the table. Only on total value.
+ *
  * Todo dun did
+ * Performance graph. (Prompt which interval when clicking it? Radio buttons for intervals?
+ *                      Straight up fetch daily, weekly, monthly, yearly or all time from API.)
  * Date picker for performance graph
  * Add portfolio
  * Add stock
@@ -61,10 +67,13 @@ let debugDiffDays = false;
 
 class App extends Component {
     loaded = false;
+    graphDataStorage = [];
+
     constructor(props){
         super(props);
         let portfolios = [];
         let jsPortfolios = {};
+
         this.state = {
             portfolios: portfolios,
             jsPortfolios: jsPortfolios,
@@ -82,18 +91,84 @@ class App extends Component {
         }else{
             console.log("failed to fetch eurovalue");
         }
+        this.forceUpdate();
     }
 
+    updateUnitValues(){
+        let jsPortfolios = this.state.jsPortfolios;
+        let nameList = [];
+        //For each portfolio
+        Object.keys(jsPortfolios).forEach(function(pkey){
+            let jsPortfolio = jsPortfolios[pkey].jsStocks;
+            //For each stock
+            Object.keys(jsPortfolio).forEach(function(skey){
+                let stock = jsPortfolio[skey];
+                let name = stock.name;
+                //If stock not in list of stocknames
+               if(nameList.indexOf(name) < 0){
+                   //Add stock to list
+                   nameList.push(name);
+               }
+            });
+
+        });
+        //For each stockname in list
+        nameList.forEach(function(name){
+            //Fetch current unit value with updateUnitValue as callback function.
+            getStockData(this.updateUnitValue.bind(this), name, null);
+        }.bind(this));
+    }
     /**
-     *
-     * @param jsonObj like this {name: "MSFT", unit_value:"13.37"}
+     * Callback function for updateUnitValues.
      */
     updateUnitValue(jsonObj){
-        //in great big giant json object, for each stock with this name change it's unit value to this new value
-        //Also since we update unit value we clearly have to update total_value if that exists?
+        console.log("Update unit value!");
+        console.log(jsonObj);
+        if(jsonObj['Meta Data'] === undefined){
+            console.log("updateUnitValue received undefined stuff");
+            return;
+        } //Just fuck it and let it try later if this is undefined.
+        let name = Object.values(jsonObj['Meta Data'])[1];              //The symbol
+        let firstVal = Object.values(jsonObj['Time Series (1min)'])[0]; //First row of the time series
+        let latestClose = firstVal['4. close'];                         //The close value of the first row (most recent)
+
+        let state = this.state;
+        let jsPortfolios = state.jsPortfolios;
+        //For each portfolio
+        Object.keys(jsPortfolios).forEach(function(pkey){
+            let portfolio = jsPortfolios[pkey];
+            console.log("Total value before: " + portfolio.total_value);
+            let total_value = 0;
+            //For each stock
+            Object.keys(portfolio).forEach(function(skey){
+                let stock = portfolio[skey];
+                //If stock name is equal to jsonObj.name
+                if(stock.name === name){
+                    //Change stock's unit value to the new value
+                    stock.unit_value = latestClose;
+                    //Set portfolio[skey] to the new version
+                    portfolio[skey] = stock;
+                }
+                //Increment portfolios total value
+                total_value += stock.unit_value*stock.quantity;
+
+            });
+            //Remove extra decimals
+            total_value = total_value.toFixed(2);
+            console.log("Total value after: " + portfolio.total_value);
+            //Set jsPortfolios[pkey] to the new version
+            jsPortfolios[pkey] = portfolio;
+        });
+        state.jsPortfolios = jsPortfolios;
+        //update state and local storage
+        this.setState(state);
+        this.updateLocalStorage();
     }
     componentDidMount(){
+        //update values
+        this.updateUnitValues();
         getEuroValue(this.updateEuroValue.bind(this));
+
         console.log("App did mount");
         let portfolios = [];
         let jsPortfolios = {};
@@ -103,6 +178,9 @@ class App extends Component {
                 console.log("Found existing list in local storage");
                 console.log(localStorage.jsPortfolios);
                 jsPortfolios = JSON.parse(localStorage.jsPortfolios);
+                if(localStorage.euroValue !== undefined){
+                    euroValue = JSON.parse(localStorage.euroValue);
+                }
                 Object.keys(jsPortfolios).forEach(function(key){
                     console.log("portofolio name: " + jsPortfolios[key].name);
                     let portfolio = <Portfolio key={(jsPortfolios[key].id)}
@@ -131,6 +209,8 @@ class App extends Component {
         state.portfolios = portfolios;
         state.jsPortfolios = jsPortfolios;
         this.setState(state);
+
+
         this.loaded = true;
     }
     updateLocalStorage(){
@@ -141,17 +221,9 @@ class App extends Component {
                 console.log("Saving to local storage");
                 console.log(jsPortfolios);
             }
+            localStorage.euroValue = JSON.stringify(euroValue);
             localStorage.jsPortfolios = JSON.stringify(jsPortfolios);
         }
-        this.alwaysUpdate();
-    }
-
-    /**
-     * Anything happened? Update this!
-     */
-    alwaysUpdate(){
-        getEuroValue(this.updateEuroValue.bind(this));
-
     }
 
     deletePortfolio(key){
@@ -191,6 +263,10 @@ class App extends Component {
     }
 
     addPortfolio(){
+        if(Object.keys(this.state.jsPortfolios).length >= 10){
+            alert("You can only have 10 portfolios");
+            return;
+        }
         var name = prompt("Pick a name for the portfolio.");
         if(name === null || name.trim() === ""){
             alert("The name cannot be empty.");
@@ -230,6 +306,7 @@ class App extends Component {
         this.setState(state);
     }
     setGraph(data){
+        console.log("setGraph");
         let name = data[0];
         let jsStocks = data[1];
         let intervalInfo = data[2];
@@ -245,30 +322,27 @@ class App extends Component {
         //Grab names of the stocks
         Object.keys(jsStocks).forEach(function(key){
             let name = jsStocks[key].name;
+            if(stockNames.indexOf(name) < 0) { //If not in list add it
+                stockNames.push(name);
+            }
             if(debugAll || debugGraph || true) console.log("Stock symbol: ",name);
         });
         state.graphLinesTotal = stockNames.length;
         state.graphLinesCount = 0;
         this.setState(state);
         let intervalSize = daysDifference(state.intervalStart, state.intervalEnd);
-        let done = [];
         //For each stock name get the data
         stockNames.forEach(function(name){
-            if(!done.indexOf(name) >= 0){ //If not in list add it
-                let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=compact&apikey=" + API_KEY;
-                state.intervalType = "day";
-                if(intervalSize > 100) {
-                    //150 (as opposed to 100 which is the amount of days you get with "compact" in the api call)
-                    // because I'm too lazy to count 5/7 and holidays and downtime and blah blah blah
-                    url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=full&apikey=" + API_KEY;
-                }else if(intervalSize === 0){
-                    state.intervalType = "intraday";
-                    //intraday 15 min interval; compact because there's only 96 15min intervals in a day.
-                    url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol="+name+"&interval=15min&outputsize=compact&apikey=" + API_KEY;
-                }
-                xhttpRequest(this.addGraphData.bind(this), url, null);
-                done.push(name);
+            let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=compact&apikey=" + API_KEY;
+            state.intervalType = "day";
+            if(intervalSize > 80) { //There are weekends and holidays and stuff so it can't be 100 (80 is just a guess).
+                url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=full&apikey=" + API_KEY;
+            }else if(intervalSize === 0){
+                state.intervalType = "intraday";
+                //intraday 15 min interval; compact because there's only 96 15min intervals in a day.
+                url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol="+name+"&interval=15min&outputsize=compact&apikey=" + API_KEY;
             }
+            xhttpRequest(this.addGraphData.bind(this), url, null);
         }.bind(this));
         state.graph = <div>
                           <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
@@ -277,7 +351,7 @@ class App extends Component {
         disableButtons = true;
         this.setState(state);
     }
-    addGraphData(jsonObj){
+    addGraphData(jsonObj, direct){
         //If the client hasn't pressed the X to cancel the graph, then do the following.
         if(!this.state.cancelGraph){
             let state = this.state;
@@ -292,6 +366,8 @@ class App extends Component {
                 this.setState(state);
                 return;
             }
+            console.log("direct: ", direct);
+            if(direct === undefined) this.graphDataStorage.push(jsonObj);
             let symbol = jsonObj["Meta Data"]["2. Symbol"];
             let timeSeries = null;
             if(state.intervalType === "day"){
@@ -344,19 +420,106 @@ class App extends Component {
                 color: color,
                 points: points
             });
-            console.log(state.graphLines);
-            console.log("state.graphLinesCount:",state.graphLinesCount);
-            console.log("state.graphLinesTotal:",state.graphLinesTotal);
+            console.log("state.graphLines:",      state.graphLines);
+            console.log("state.graphLinesCount:", state.graphLinesCount);
+            console.log("state.graphLinesTotal:", state.graphLinesTotal);
 
             //Only create the graph when the final value has arrived.
             if(state.graphLinesCount === state.graphLinesTotal){
-                state.graph = undefined;
-                state.graph = <GraphWindow interval={this.state.intervalStart + " - " + this.state.intervalEnd} intervalType={this.state.intervalType} name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
+                console.log("Changing state.graph!");
+                state.graph = <GraphWindow intervalChanged={this.intervalChanged.bind(this)} startDate={this.state.intervalStart} endDate={this.state.intervalEnd} intervalType={this.state.intervalType} name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
             }
             this.setState(state);
         }
     }
+    /**
+     *
+     * @param info: [startDate, endDate] as strings
+     */
+    intervalChanged(info){
+        console.log("intervalChanged received: ", info);
+        /*
+        //set new interval in state
+        let state = this.state;
+        state.startDate = info[0];
+        state.endDate   = info[1];
+        state.graphLinesCount = 0;
+        state.graphLinesTotal = this.graphDataStorage.length;
+        state.graph = <div>
+                        <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+                        <Loader/>
+                    </div>;
+        this.setState(state);
+        //Loop through graphDataStorage and send each of the JSON objects to addGraphData;
+        this.graphDataStorage.forEach(function(graphData){
+            console.log("Sending the following to addGraphData: ", graphData);
+            this.addGraphData(graphData, 1);
+        }.bind(this));
+        */
+        //Calculate new data with this interval
+        let graphLines = [];
+        let intervalStart = info[0];
+        let intervalEnd = info[1];
+        let intervalType = "day";
+        if(daysDifference(intervalStart, intervalEnd) === 0){
+            intervalType = "intraday";
+        }
 
+        this.graphDataStorage.forEach(function(jsonObj){
+            let symbol = jsonObj["Meta Data"]["2. Symbol"];
+            let timeSeries = null;
+            if(this.state.intervalType === "day"){
+                timeSeries = jsonObj["Time Series (Daily)"];
+            }else{
+                timeSeries = jsonObj["Time Series (15min)"];
+            }
+
+            let color = getRandomColor();
+            let points = [];
+            console.log("Time series:");
+            console.log(timeSeries);
+
+
+            console.log("Before loop endDate: " + intervalEnd);
+            //For each value in the time series, get the date and the closing value and make a JSON point of it.
+            //Then add that point to the list of points.
+            let counter = 1;
+            Object.keys(timeSeries).forEach(function(key){
+                let date = key;
+                let startDiff = daysDifference(date, intervalStart);
+                let endDiff = daysDifference(intervalEnd, date);
+
+                //Check if it's within the interval
+                if(intervalType === "day"){
+                    if(startDiff > 0 || endDiff > 0){
+                        //Not adding
+                    }else{
+                        let close = timeSeries[key]["4. close"];
+                        let jsPoint = {x: date, y: parseFloat(close)};
+                        points.push(jsPoint);
+                        if(debugAll || debugGraph) console.log(symbol, "close:", close);
+                    }
+                }else{
+                    //Intraday stuff has to be same day but since we fetch more 15 min intervals than fit in a day
+                    // there will also be other days included so we better remove those.
+                    let close = timeSeries[key]["4. close"];
+                    let jsPoint = {x: counter, y: parseFloat(close)};
+                    points.push(jsPoint);
+                    counter++;
+                    if(debugAll || debugGraph) console.log(symbol, "close:", close);
+                }
+
+            });
+            points.reverse();
+            //Push this line to the list of graph lines in state.
+            graphLines.push({
+                name: symbol.toUpperCase(),
+                color: color,
+                points: points
+            });
+        }.bind(this));
+        return graphLines;
+    }
     closeGraph(){
         let state = this.state;
         state.graph = undefined;
@@ -444,22 +607,27 @@ class App extends Component {
 class Portfolio extends Component {
     updatePortfolio = undefined;
     deleteThis      = undefined;
-    setGraph     = undefined;
+    setGraph        = undefined;
     loaded          = false;
     constructor(props){
         super(props);
         this.deleteThis      = this.props.deletePortfolio;
         this.updatePortfolio = this.props.updatePortfolio;
         this.setGraph     = this.props.setGraph;
-
         this.state = {
             name:        this.props.name,
             currency:    currency,
             id:          this.props.id,
+            originaljsStocksOrder: this.props.jsStocks,
             jsStocks:    this.props.jsStocks,
             total_value: 0.0,
             selected:    [],
-            showGraph:   false
+            sortDirections: {
+                symbol: "none",
+                unit_value: "none",
+                quantity: "none",
+                total_value: "none"
+            }
         };
         this.loaded = true;
     }
@@ -471,6 +639,31 @@ class Portfolio extends Component {
         }
     }
 
+    stockSpaceAvailable(symbol){
+        if(Object.keys(this.state.jsStocks).length < MAX_STOCKS){
+            console.log("OK because MAX_STOCKS: ", MAX_STOCKS);
+            console.log("And length: ", Object.keys(this.state.jsStocks).length);
+            return true;
+        }
+        else{
+            let names = [];
+            Object.keys(this.state.jsStocks).forEach(function(key){
+                let name = this.state.jsStocks[key].name;
+                if(names.indexOf(name) < 0) { //If not in list add it
+                    names.push(name);
+                }
+            }.bind(this));
+            if(names.length < MAX_STOCKS){
+                console.log("2 OK because MAX_STOCKS: ", MAX_STOCKS);
+                console.log("2 And length: ", Object.keys(this.state.jsStocks).length);
+                return true;
+            }
+            if(names.length >= MAX_STOCKS && names.indexOf(symbol) >= 0){
+                return true;
+            }
+            return false;
+        }
+    }
     addStock(){
         //This function takes the input and tries to fetch the data of that stock symbol.
         let input = prompt("Enter the stock's symbol and how many you have. e.g. \"MSFT, 10\"");
@@ -497,6 +690,8 @@ class Portfolio extends Component {
         }catch(e){
             alert("That's not a valid input");
         }
+
+
     }
     addStock2(jsonObj, quantity){
         //The callback function of the XHTTPrequest.
@@ -507,6 +702,10 @@ class Portfolio extends Component {
         }else{
             let state = this.state;
             let name = Object.values(jsonObj['Meta Data'])[1]; //The symbol
+            if(!this.stockSpaceAvailable(name)){
+                alert("Can not do that! You can only have 50 stocks of different symbols.");
+                return;
+            }
             let firstVal = Object.values(jsonObj['Time Series (1min)'])[0]; //First row of the time series
             let latestClose = firstVal['4. close']; //The close value of the first row (most recent)
             let oldValue = state.total_value;
@@ -554,6 +753,8 @@ class Portfolio extends Component {
             this.setGraph([this.state.name, state.jsStocks, info]);
         }
     }
+
+
     deletePortfolio(){
         let input = window.confirm("Are you sure you want to delete this portfolio?");
         if(input){
@@ -592,31 +793,38 @@ class Portfolio extends Component {
         this.forceUpdate();
     }
     updateToShow(){
+        let state = this.state;
         let jsStocks = this.state.jsStocks;
         let showStocks = [];
         let getcurr = this.getCurrency.bind(this);
         let updateSelected = this.setSelected.bind(this);
-        let multiplier = 1;
+        let multiplier = 0;
         let totalValue = 0;
+
+        //Figure out which multiplier to use (euroValue for euro or 1 for dollar).
         if(jsStocks !== undefined){
             totalValue = this.getTotalValue(jsStocks);
             if(this.state.currency === "euro"){
                 multiplier = euroValue;
-                console.log("Showing as euros");
+                console.log("Setting multiplier = euroValue");
             }else{
-                console.log("Showing as dollars");
+                multiplier = 1;
+                console.log("Setting multiplier = 1");
             }
         }
         totalValue = (totalValue * multiplier).toFixed(2);
+
+
+        console.log("in showstocks loop-------------------------");
+        //For each stock in jsStocks create a <Stock/> to push to the showStocks list
         Object.keys(jsStocks).forEach(function(key){
             let stock = jsStocks[key];
             let unit_value = (parseFloat(stock.unit_value)*multiplier).toFixed(2);
             let id = stock.id;
-            if(debugAll){
-                console.log("in showstocks loop");
+            if(debugAll || debugAppRender){
                 console.log("Unit_value:", unit_value);
             }
-            showStocks.push(<Stock
+            let newStock = <Stock
                 updateSelected={updateSelected}
                 getcurrency={getcurr}
                 key={id}
@@ -624,33 +832,33 @@ class Portfolio extends Component {
                 name={stock.name.toUpperCase()}
                 unit_value={unit_value}
                 quantity={stock.quantity}
-                renderNow={this.renderNow.bind(this)}/>);
+                renderNow={this.renderNow.bind(this)}
+                />;
+            showStocks.push(newStock);
         }.bind(this));
-        if(debugAll){
-            console.log("showing as euros");
+        console.log("-------------------------------------------");
+        if(debugAppRender){
             console.log("Total value:", totalValue);
-            console.log("showStocks:");
-            console.log(showStocks);
+            console.log("showStocks:",showStocks);
         }
 
-
-        //Update state
-        let state = this.state;
+        //Update state, forcing rerender
         state.showStocks = showStocks;
         state.total_value = totalValue;
         this.setState(state);
 
+        console.log("This is the state after updating showStocks: ", this.state);
 
         //Since this is the last stop for all modifying functions in this class we pass the change up at this point.
         this.passItUp();
     }
+
 
     /**
      * Call this whenever a change occurs to pass that info up so the big boss is aware of it.
      */
     passItUp(){
         let state = this.state;
-        if(debugAll)console.log("Saving state!");
         let save = {
             name: state.name,
             id: state.id,
@@ -658,7 +866,7 @@ class Portfolio extends Component {
             jsStocks: state.jsStocks,
             total_value: state.total_value,
         };
-        console.log(save);
+        if(debugAll)console.log("Saving state!", save);
         this.updatePortfolio(save);
     }
     getCurrency(){
@@ -666,9 +874,8 @@ class Portfolio extends Component {
         return this.state.currency;
     }
     getTotalValue(jsStocks){
-        if(debugAll)console.log("Getting total value");
+        if(debugAll)console.log("Getting total value:",jsStocks);
         let totalValue = 0;
-        console.log(jsStocks);
         Object.keys(jsStocks).forEach(function(key){
             let current = jsStocks[key];
             totalValue += parseFloat(current.quantity)*parseFloat(current.unit_value);
@@ -694,7 +901,7 @@ class Portfolio extends Component {
             state.selected = selected;
             this.setState(state);
         }
-        console.log(this.state.selected);
+        console.log("Selected: ", this.state.selected);
     }
     //Removes all stocks that are in the list of selected stocks
     removeSelected(){
@@ -712,15 +919,415 @@ class Portfolio extends Component {
         }
         this.updateStocks(jsStocks, this.getTotalValue(jsStocks));
     }
+    sortStocks(label, direction){
+        let state = this.state;
+        let jsStocks = state.jsStocks;
+        let sorted = {};
+
+        //Sort ascending
+        if(direction === "asc"){
+            //While length of sorted is less than that of jsStocks
+            while(Object.keys(sorted).length < Object.keys(jsStocks).length){
+                //For each stock in jsStocks
+                Object.keys(jsStocks).forEach(function(key){
+                    let stock = jsStocks[key];
+                    sorted.forEach(function(sortedStock){
+                        if(stock[label] >= sortedStock[label]){
+                            sorted[sorted.indexOf(sortedStock) +1] = stock;
+                        }
+                    });
+                });
+            }
+        //Sort descending
+        }else if(direction === "desc"){
+            //While length of sorted is less than that of jsStocks
+            while(Object.keys(sorted).length < Object.keys(jsStocks).length) {
+                //For each stock in jsStocks
+                Object.keys(jsStocks).forEach(function (key) {
+                    let stock = jsStocks[key];
+                    sorted.forEach(function(sortedStock){
+                        if(stock[label] < sortedStock[label]){
+                            sorted[sorted.indexOf(sortedStock) +1] = stock;
+                        }
+                    });
+                });
+            }
+        }
+        state.jsStocks = sorted;
+        this.setState(sorted);
+    }
+    alertSort(label, direction){
+        //Set all directions to "none" and set this one to {direction}
+        let state = this.state;
+        state.sortDirections.symbol = "none";
+        state.sortDirections.unit_value = "none";
+        state.sortDirections.quantity = "none";
+        state.sortDirections.total_value = "none";
+        state.sortDirections[label] = direction;
+        this.setState(state);
+        if(direction !== "none"){
+            this.sortStocks(label, direction);
+        }
+    }
     render() {
         let currencySymbol = dollarSymbol;
         if(this.state.currency === "euro"){
             currencySymbol = euroSymbol;
         }
-        if(debugAll){
-            console.log("Drawing showstocks: ");
+        if(debugAll || debugAppRender){
+            console.log("Rendering this showStocks: ");
             console.log(this.state.showStocks);
         }
+        if(debugSorting){
+            console.log("Sort directions:", this.state.sortDirections);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+        console.log("------------------------------------");
         return (
             <div className="Portfolio col- col-5 col-m-11">
                 <div className="Portfolio-inner">
@@ -736,16 +1343,36 @@ class Portfolio extends Component {
                             <thead>
                             <tr>
                                 <th><div className="Table-label">
-                                    Symbol
+                                    <SortButton
+                                        label={"Symbol"}
+                                        value={"symbol"}
+                                        alertSorted={this.alertSort.bind(this)}
+                                        direction={this.state.sortDirections.symbol}
+                                    />
                                 </div></th>
                                 <th><div className="Table-label">
-                                    Unit value
+                                    <SortButton
+                                        label={"Unit value"}
+                                        value={"unit_value"}
+                                        alertSorted={this.alertSort.bind(this)}
+                                        direction={this.state.sortDirections.unit_value}
+                                    />
                                 </div></th>
                                 <th><div className="Table-label">
-                                    Quantity
+                                    <SortButton
+                                        label={"Quantity"}
+                                        value={"quantity"}
+                                        alertSorted={this.alertSort.bind(this)}
+                                        direction={this.state.sortDirections.quantity}
+                                    />
                                 </div></th>
                                 <th><div className="Table-label">
-                                    Total value
+                                    <SortButton
+                                        label={"Total value"}
+                                        value={"total_value"}
+                                        alertSorted={this.alertSort.bind(this)}
+                                        direction={this.state.sortDirections.total_value}
+                                    />
                                 </div></th>
                                 <th><div className="Table-label">
                                     Select
@@ -807,7 +1434,9 @@ class Stock extends Component{
         if(debugAll) {
             console.log("This is in render in stock");
         }
-        //console.log(this.state.getcurrency());
+        if(debugAppRender){
+            console.log("Drawing stock with unit_value: " + this.state.unit_value);
+        }
         return(
             <tr>
                 <td><div className="after">{this.state.name.toUpperCase()}</div></td>
@@ -830,8 +1459,10 @@ class GraphWindow extends Component{
         this.state = {
             name: this.props.name,
             data: this.props.data,
-            interval: this.props.interval,
-            intervalType: this.props.intervalType
+            startDate: moment(this.props.startDate),
+            endDate: moment(this.props.endDate),
+            interval: this.props.startDate + " - " + this.props.endDate,
+            intervalType: this.props.intervalType,
         };
     }
     componentDidMount(){
@@ -840,6 +1471,38 @@ class GraphWindow extends Component{
     }
     closeGraph(){
         this.closeGraphCallback();
+    }
+    handleStartChange(date) {
+        console.log("Changed start date to: ", date.format("YYYY-MM-DD"));
+        let state = this.state;
+        if(date>state.endDate){
+            alert("Start date can not be after end date");
+            this.forceUpdate();
+        }else{
+            state.startDate = date;
+            this.setState(state);
+            let data = this.props.intervalChanged([date.format("YYYY-MM-DD"), this.state.endDate.format("YYYY-MM-DD")]);
+            console.log("In Graphwindow received the following from App: ", data);
+            state.data = data;
+            this.setState(state);
+        }
+    }
+    handleEndChange(date) {
+        console.log("Changed end date to: ", date.format("YYYY-MM-DD"));
+        let state = this.state;
+        if(date<state.startDate){
+            alert("End date can not be before start date");
+            this.forceUpdate();
+        }else{
+            state.endDate = date;
+            this.setState(state);
+            let data = this.props.intervalChanged([this.state.startDate.format("YYYY-MM-DD"), date.format("YYYY-MM-DD")]);
+            console.log("In Graphwindow received the following from App: ", data);
+            state.data = data;
+            this.setState(state);
+        }
+    }
+    intervalChanged(date){
     }
     render(){
         if(this.props.intervalType === "day"){
@@ -865,6 +1528,18 @@ class GraphWindow extends Component{
                             xDisplay={getDate}
                         />
                     </div>
+                    <div className="PerfGraphDatePicker">
+                        <span>Start date</span>
+                        <DatePicker
+                            selected={this.state.startDate}
+                            onChange={this.handleStartChange.bind(this)}
+                        />
+                        <span>End date</span>
+                        <DatePicker
+                            selected={this.state.endDate}
+                            onChange={this.handleEndChange.bind(this)}
+                        />
+                    </div>
                 </div>
             );
         }else{
@@ -888,6 +1563,18 @@ class GraphWindow extends Component{
                             showLegends={true}
                             isDate={false}
                             xDisplay={null}
+                        />
+                    </div>
+                    <div className="PerfGraphDatePicker">
+                        <span>Start date</span>
+                        <DatePicker
+                            selected={moment(this.state.startDate)}
+                            onChange={this.handleStartChange.bind(this)}
+                        />
+                        <span>End date</span>
+                        <DatePicker
+                            selected={moment(this.state.endDate)}
+                            onChange={this.handleEndChange.bind(this)}
                         />
                     </div>
                 </div>
@@ -941,7 +1628,6 @@ class IntervalPrompt extends Component {
     constructor(props){
         super(props);
         let today = moment();
-        //todo Apparently this doesn't work atm [endDate and startDate is the same in prompt]
 
         this.state = {
             startDate: today,
@@ -1006,21 +1692,49 @@ class IntervalPrompt extends Component {
 
     }
 }
-/**
- * An image that you can click
- */
-class ClickableImage extends Component {
+class SortButton  extends Component {
+    constructor(props){
+        super(props);
+        this.state = {
+            sortDir: "none",
+            sortDirArrow: ""
+        }
+    }
+    clicked() {
+        let sortDir = this.state.sortDir;
+        if(sortDir === "none"){
+            sortDir = "desc";
+        }else if(sortDir === "desc"){
+            sortDir = "asc";
+        }else{
+            sortDir = "none";
+        }
+        this.setSortDirArrow(sortDir);
+    }
+    setSortDirArrow(sortDir){
+        let state = this.state;
+        state.sortDir = sortDir;
+        if(sortDir === "desc"){
+            state.sortDirArrow = ' ↓';
+        }else if(sortDir === "asc"){
+            state.sortDirArrow = ' ↑';
+        }else{
+            state.sortDirArrow = '';
+        }
+        this.setState(state);
+        this.props.alertSorted(this.props.value, this.state.sortDir);
+    }
+
     render(){
         return(
-            <img className="ClickableImage" src={this.props.src}/>
-        );
+            <div className={"SortButton"} onClick={this.clicked.bind(this)}>
+                {this.props.label}{this.state.sortDirArrow}
+            </div>
+        )
     }
 }
 
 class Loader extends Component {
-    constructor(props){
-        super(props);
-    }
     render(){
         return(
             <div className={"loader"}/>
@@ -1068,7 +1782,7 @@ function xhttpRequest(callback, file, rememberThis){
     rawFile.onreadystatechange = function (){
         if(this.readyState === 4 && this.status === 200){
             var jsonObj = JSON.parse(this.responseText);
-            if(rememberThis != null){
+            if(rememberThis !== null && rememberThis !== undefined && rememberThis !== 0){
                 callback(jsonObj, rememberThis);
             }else{
                 callback(jsonObj);
