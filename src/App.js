@@ -692,10 +692,11 @@ class Portfolio extends Component {
         let symbol = "";
         let quantity = 0;
         if(input === null || input.trim() === ""){
-            //alert("The symbol cannot be empty.");
-            input = ("MSFT, 13").split(",");
-            symbol = input[0].trim();
-            quantity = input[1].trim();
+            alert("The symbol cannot be empty.");
+            //input = ("MSFT, 13").split(",");
+            //symbol = input[0].trim();
+            //quantity = input[1].trim();
+            return;
         }else {
             let splitInput = input.split(",");
             if(splitInput[0].trim() === input.trim()){
