@@ -30,3 +30,18 @@
 * You need to request a free API key to use the service
 
 * You need to find a library able to generate the graphs(google will be your friend for this) [react-linechart]
+
+
+## Problems I had:
+I could not get the inside of the table to update the stocks shown. For each table row I display the following:
+```
+return(<tr>
+            <td><div className="after">{this.state.name.toUpperCase()}</div></td>
+            <td><div className="after">{this.state.unit_value}</div></td>
+            <td><div className="after">{this.state.quantity}</div></td>
+            <td><div className="after">{this.state.total_value}</div></td>
+            <td><div className="after"><input type='checkbox' onChange={this.onChange.bind(this)} checked=  {this.state.selected} value={this.key}/></div></td>
+       </tr>
+);
+```
+and with the help of console prints I have been able to determine that the information for changing the currency does indeed take effect up until it's being rendered in the portfolio component. This means I create new `Stock`'s that contain the above shown render function and the correct values and I confirm that with a console.log before they are passed down into the render function of the portfolio AND INSIDE the render function. However, in the Stock render function I also console.log out the values of the ones that ARE in fact being drawn and they have the wrong values... 
