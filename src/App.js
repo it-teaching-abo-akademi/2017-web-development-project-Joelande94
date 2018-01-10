@@ -29,6 +29,8 @@ let debugAppRender = false;
 let debugUpdateUnitValue = false;
 let debugSorting = false;
 
+let sebastienAlerted = false;
+
 //Because they don't work yet but I might fix it in the future, these things won't be enabled
 let graphDatePickerWorks = false;
 let sortWorking = false;
@@ -555,7 +557,7 @@ class App extends Component {
         if(this.state.graph === undefined){
             if(this.state.prompt !== undefined){
                 //There's a prompt
-                console.log("Drawing app with prompt");
+                if(debugAll) console.log("Drawing app with prompt");
                 return (
                     <div className="App">
                         <div className="BlurLayer">
@@ -578,7 +580,7 @@ class App extends Component {
                 );
             }else{
                 //There is no prompt and no graph
-                console.log("Drawing app with no graph");
+                if(debugAll) console.log("Drawing app with no graph");
                 return (
                     <div className="App">
                         <div className="Header">
@@ -597,7 +599,7 @@ class App extends Component {
             }
         }else{
             //There is a graph.
-            console.log("Drawing app with graph");
+            if(debugAll) console.log("Drawing app with graph");
             return (
                 <div className="App">
                     <div className="BlurLayer">
@@ -790,6 +792,16 @@ class Portfolio extends Component {
         this.updateCurrency("dollar");
     }
     updateCurrency(currency){
+        if(!sebastienAlerted){
+            alert("Hey Sebastien! The currency switcher only works on the total value of the" +
+                " portfolio as you can see because I could not get the table to rerender properly but if you take a close" +
+                " look in the console you will see that the render function does indeed try to render the stocks with the" +
+                " correct values (Look in the array after \"Rendering these stocks:\"). But then if you look after that" +
+                " what's being printed from the stocks that are ACTUALLY being drawn you can see that those are the wrong values." +
+                " I really don't understand how this can be (Right stocks are being passed to the render function so it shouldn't" +
+                " be possible that the old ones rerender) so if you have a clue how to fix this I would be very grateful!");
+            sebastienAlerted = true;
+        }
         let state = this.state;
         state.currency = currency;
         this.setState(state);
@@ -826,16 +838,16 @@ class Portfolio extends Component {
             totalValue = this.getTotalValue(jsStocks);
             if(this.state.currency === "euro"){
                 multiplier = euroValue;
-                console.log("Setting multiplier = euroValue");
+                if(debugAll) console.log("Setting multiplier = euroValue");
             }else{
                 multiplier = 1;
-                console.log("Setting multiplier = 1");
+                if(debugAll) console.log("Setting multiplier = 1");
             }
         }
         totalValue = (totalValue * multiplier).toFixed(2);
 
 
-        console.log("in showstocks loop-------------------------");
+        if(debugAll) console.log("in showstocks loop-------------------------");
         //For each stock in jsStocks create a <Stock/> to push to the showStocks list
         Object.keys(jsStocks).forEach(function(key){
             let stock = jsStocks[key];
@@ -856,8 +868,9 @@ class Portfolio extends Component {
                 />;
             showStocks.push(newStock);
         }.bind(this));
-        console.log("-------------------------------------------");
-        if(debugAppRender){
+        if(debugAll) console.log("-------------------------------------------");
+        if(debugAppRender || debugCurrencySwitcher){
+            console.log("After changing the stocks to show in the table (showStocks) this is what should be displayed now.");
             console.log("Total value:", totalValue);
             console.log("showStocks:",showStocks);
         }
@@ -867,7 +880,7 @@ class Portfolio extends Component {
         state.total_value = totalValue;
         this.setState(state);
 
-        console.log("This is the state after updating showStocks: ", this.state);
+        if(debugAll || debugCurrencySwitcher) console.log("This is the state of portfolio \""+this.state.name+"\"after updating showStocks: ", this.state);
 
         //Since this is the last stop for all modifying functions in this class we pass the change up at this point.
         this.passItUp();
@@ -999,8 +1012,8 @@ class Portfolio extends Component {
         if(this.state.currency === "euro"){
             currencySymbol = euroSymbol;
         }
-        if(debugAll || debugAppRender){
-            console.log("Rendering this showStocks: ");
+        if(debugAll || debugAppRender || debugCurrencySwitcher){
+            console.log("Line 1016-ish: Rendering these stocks: ");
             console.log(this.state.showStocks);
         }
         if(debugSorting){
@@ -1113,8 +1126,8 @@ class Stock extends Component{
         if(debugAll) {
             console.log("This is in render in stock");
         }
-        if(debugAppRender){
-            console.log("Drawing stock with unit_value: " + this.state.unit_value);
+        if(debugAppRender || debugCurrencySwitcher){
+            console.log("Line 1130-ish: Drawing " + this.state.name + " in table with unit_value: " + this.state.unit_value);
         }
         return(
             <tr>
