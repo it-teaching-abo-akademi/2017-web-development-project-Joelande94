@@ -24,9 +24,10 @@ let MAX_STOCKS = 50;
 let debugAll = false;
 let debugGraph = false;
 let debugDiffDays = false;
+let debugCurrencySwitcher = true;
 let debugAppRender = false;
 let debugUpdateUnitValue = false;
-let debugSorting = true;
+let debugSorting = false;
 
 //Because they don't work yet but I might fix it in the future, these things won't be enabled
 let graphDatePickerWorks = false;
@@ -657,10 +658,13 @@ class Portfolio extends Component {
     }
 
     stockSpaceAvailable(symbol){
-        if(this.state.jsStocks === undefined || Object.keys(this.state.jsStocks).length < MAX_STOCKS){
+        if(this.state.jsStocks === undefined){
             let state = this.state;
             state.jsStocks = {};
             this.setState(state);
+            return true;
+        }
+        if(Object.keys(this.state.jsStocks).length < MAX_STOCKS){
             return true;
         }
         else{
@@ -672,8 +676,6 @@ class Portfolio extends Component {
                 }
             }.bind(this));
             if(names.length < MAX_STOCKS){
-                console.log("2 OK because MAX_STOCKS: ", MAX_STOCKS);
-                console.log("2 And length: ", Object.keys(this.state.jsStocks).length);
                 return true;
             }
             if(names.length >= MAX_STOCKS && names.indexOf(symbol) >= 0){

@@ -49,8 +49,8 @@
       <file leaf-file-name="App.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/App.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="303">
-              <caret line="659" column="102" lean-forward="false" selection-start-line="659" selection-start-column="102" selection-end-line="659" selection-end-column="102" />
+            <state relative-caret-position="373">
+              <caret line="661" column="35" lean-forward="false" selection-start-line="661" selection-start-column="35" selection-end-line="661" selection-end-column="35" />
               <folding>
                 <element signature="e#0#41#0" expanded="true" />
                 <element signature="e#157#214#0" expanded="true" />
@@ -79,7 +79,6 @@
                 <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
                 <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
                 <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-                <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
                 <element signature="n#Stock#0" expanded="false" />
                 <element signature="n#!!block;n#getDate#0" expanded="false" />
                 <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -176,11 +175,11 @@
   <component name="NodeModulesDirectoryManager">
     <handled-path value="$PROJECT_DIR$/node_modules" />
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="2196" />
-    <option name="y" value="189" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="2161" />
+    <option name="y" value="-4" />
     <option name="width" value="1396" />
-    <option name="height" value="984" />
+    <option name="height" value="1012" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -277,12 +276,12 @@
       <workItem from="1515088672979" duration="12753000" />
       <workItem from="1515337030967" duration="23062000" />
       <workItem from="1515404716556" duration="38746000" />
-      <workItem from="1515586504279" duration="3418000" />
+      <workItem from="1515586504279" duration="4181000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="293403000" />
+    <option name="totallyTimeSpent" value="294166000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -294,10 +293,10 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="2196" y="189" width="1396" height="984" extended-state="0" />
+    <frame x="1920" y="-4" width="1920" height="1084" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1812321" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13177083" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295325" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32917964" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -378,7 +377,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -455,7 +453,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -532,7 +529,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -609,7 +605,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -686,7 +681,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -763,7 +757,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -840,7 +833,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -909,7 +901,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -978,7 +969,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
@@ -1065,8 +1055,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/App.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="303">
-          <caret line="659" column="102" lean-forward="false" selection-start-line="659" selection-start-column="102" selection-end-line="659" selection-end-column="102" />
+        <state relative-caret-position="373">
+          <caret line="661" column="35" lean-forward="false" selection-start-line="661" selection-start-column="35" selection-end-line="661" selection-end-column="35" />
           <folding>
             <element signature="e#0#41#0" expanded="true" />
             <element signature="e#157#214#0" expanded="true" />
@@ -1095,7 +1085,6 @@
             <element signature="n#!!block;n#getTotalValue#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#setSelected#0;n#Portfolio#0" expanded="false" />
             <element signature="n#!!block;n#removeSelected#0;n#Portfolio#0" expanded="false" />
-            <element signature="n#!!block;n#render#0;n#Portfolio#0" expanded="false" />
             <element signature="n#Stock#0" expanded="false" />
             <element signature="n#!!block;n#getDate#0" expanded="false" />
             <element signature="n#!!block;n#getRandomColor#0" expanded="false" />
