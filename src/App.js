@@ -28,6 +28,10 @@ let debugAppRender = false;
 let debugUpdateUnitValue = false;
 let debugSorting = true;
 
+//Because they don't work yet but I might fix it in the future, these things won't be enabled
+let graphDatePickerWorks = false;
+let sortWorking = false;
+
 //               HOLY SPIRIT OF REACT
 //      -> INFORMATION FLOWS UP. NEVER FETCH. <-
 
@@ -335,10 +339,12 @@ class App extends Component {
         stockNames.forEach(function(name){
             let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=compact&apikey=" + API_KEY;
             state.intervalType = "day";
+            this.setState(state);
             if(intervalSize > 80) { //There are weekends and holidays and stuff so it can't be 100 (80 is just a guess).
                 url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+name+"&outputsize=full&apikey=" + API_KEY;
             }else if(intervalSize === 0){
                 state.intervalType = "intraday";
+                this.setState(state);
                 //intraday 15 min interval; compact because there's only 96 15min intervals in a day.
                 url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol="+name+"&interval=15min&outputsize=compact&apikey=" + API_KEY;
             }
@@ -351,7 +357,7 @@ class App extends Component {
         disableButtons = true;
         this.setState(state);
     }
-    addGraphData(jsonObj, direct){
+    addGraphData(jsonObj){
         //If the client hasn't pressed the X to cancel the graph, then do the following.
         if(!this.state.cancelGraph){
             let state = this.state;
@@ -366,8 +372,6 @@ class App extends Component {
                 this.setState(state);
                 return;
             }
-            console.log("direct: ", direct);
-            if(direct === undefined) this.graphDataStorage.push(jsonObj);
             let symbol = jsonObj["Meta Data"]["2. Symbol"];
             let timeSeries = null;
             if(state.intervalType === "day"){
@@ -427,7 +431,16 @@ class App extends Component {
             //Only create the graph when the final value has arrived.
             if(state.graphLinesCount === state.graphLinesTotal){
                 console.log("Changing state.graph!");
-                state.graph = <GraphWindow intervalChanged={this.intervalChanged.bind(this)} startDate={this.state.intervalStart} endDate={this.state.intervalEnd} intervalType={this.state.intervalType} name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
+                //state.graph = <GraphWindow intervalChanged={this.intervalChanged.bind(this)} startDate={this.state.intervalStart} endDate={this.state.intervalEnd} intervalType={this.state.intervalType} name={state.graphName} data={state.graphLines} renderNow={this.renderNow.bind(this)} closeGraph={this.closeGraph.bind(this)}/>;
+
+                state.graph = <GraphWindow
+                                startDate={this.state.intervalStart}
+                                endDate={this.state.intervalEnd}
+                                intervalType={this.state.intervalType}
+                                name={state.graphName}
+                                data={state.graphLines}
+                                renderNow={this.renderNow.bind(this)}
+                                closeGraph={this.closeGraph.bind(this)}/>;
             }
             this.setState(state);
         }
@@ -436,9 +449,11 @@ class App extends Component {
      *
      * @param info: [startDate, endDate] as strings
      */
+    /*
     intervalChanged(info){
         console.log("intervalChanged received: ", info);
-        /*
+
+        //Comment from here
         //set new interval in state
         let state = this.state;
         state.startDate = info[0];
@@ -455,7 +470,8 @@ class App extends Component {
             console.log("Sending the following to addGraphData: ", graphData);
             this.addGraphData(graphData, 1);
         }.bind(this));
-        */
+        //Comment to here
+
         //Calculate new data with this interval
         let graphLines = [];
         let intervalStart = info[0];
@@ -520,6 +536,7 @@ class App extends Component {
         }.bind(this));
         return graphLines;
     }
+    */
     closeGraph(){
         let state = this.state;
         state.graph = undefined;
@@ -931,8 +948,10 @@ class Portfolio extends Component {
                 //For each stock in jsStocks
                 Object.keys(jsStocks).forEach(function(key){
                     let stock = jsStocks[key];
-                    sorted.forEach(function(sortedStock){
+                    Object.keys(sorted).forEach(function(sortedStock){
+                        console.log("if "+ stock[label]+ " >= " + sortedStock[label]);
                         if(stock[label] >= sortedStock[label]){
+                            console.log("Do the thing!");
                             sorted[sorted.indexOf(sortedStock) +1] = stock;
                         }
                     });
@@ -945,7 +964,8 @@ class Portfolio extends Component {
                 //For each stock in jsStocks
                 Object.keys(jsStocks).forEach(function (key) {
                     let stock = jsStocks[key];
-                    sorted.forEach(function(sortedStock){
+                    Object.keys(sorted).forEach(function(sortedStock){
+                        console.log("if "+ stock[label]+ " >= " + sortedStock[label]);
                         if(stock[label] < sortedStock[label]){
                             sorted[sorted.indexOf(sortedStock) +1] = stock;
                         }
@@ -957,16 +977,18 @@ class Portfolio extends Component {
         this.setState(sorted);
     }
     alertSort(label, direction){
-        //Set all directions to "none" and set this one to {direction}
-        let state = this.state;
-        state.sortDirections.symbol = "none";
-        state.sortDirections.unit_value = "none";
-        state.sortDirections.quantity = "none";
-        state.sortDirections.total_value = "none";
-        state.sortDirections[label] = direction;
-        this.setState(state);
-        if(direction !== "none"){
-            this.sortStocks(label, direction);
+        if(sortWorking){
+            //Set all directions to "none" and set this one to {direction}
+            let state = this.state;
+            state.sortDirections.symbol = "none";
+            state.sortDirections.unit_value = "none";
+            state.sortDirections.quantity = "none";
+            state.sortDirections.total_value = "none";
+            state.sortDirections[label] = direction;
+            this.setState(state);
+            if(direction !== "none"){
+                this.sortStocks(label, direction);
+            }
         }
     }
     render() {
@@ -981,352 +1003,6 @@ class Portfolio extends Component {
         if(debugSorting){
             console.log("Sort directions:", this.state.sortDirections);
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
         console.log("------------------------------------");
         return (
             <div className="Portfolio col- col-5 col-m-11">
@@ -1502,84 +1178,142 @@ class GraphWindow extends Component{
             this.setState(state);
         }
     }
-    intervalChanged(date){
-    }
     render(){
-        if(this.props.intervalType === "day"){
-            return (
-                <div>
-                    <div className="GraphWindowHeader">
-                        <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+        console.log("rendering graphwindow with the following data:",this.state.data);
+        if(graphDatePickerWorks){
+            if(this.props.intervalType === "day"){
+                console.log("daily");
+                return (
+                    <div>
+                        <div className="GraphWindowHeader">
+                            <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+                        </div>
+                        <h1>{this.state.name}</h1>
+                        <h3>Performance graph ({this.state.interval})</h3>
+                        <h3>{"Daily"}</h3>
+                        <div className="GraphWindow">
+                            <LineChart
+                                width={800}
+                                height={400}
+                                xLabel={"Time"}
+                                yLabel={"Closing value (USD)"}
+                                data={this.state.data}
+                                hidePoints={true}
+                                pointRadius={0.5}
+                                showLegends={true}
+                                isDate={true}
+                                xDisplay={getDate}
+                            />
+                        </div>
+                        <div className="PerfGraphDatePicker">
+                            <span>Start date</span>
+                            <DatePicker
+                                selected={this.state.startDate}
+                                onChange={this.handleStartChange.bind(this)}
+                            />
+                            <span>End date</span>
+                            <DatePicker
+                                selected={this.state.endDate}
+                                onChange={this.handleEndChange.bind(this)}
+                            />
+                        </div>
                     </div>
-                    <h1>{this.state.name}</h1>
-                    <h3>Performance graph ({this.state.interval})</h3>
-                    <h3>{"Daily"}</h3>
-                    <div className="GraphWindow">
-                        <LineChart
-                            width={800}
-                            height={400}
-                            xLabel={"Time"}
-                            yLabel={"Closing value (USD)"}
-                            data={this.state.data}
-                            hidePoints={true}
-                            pointRadius={0.5}
-                            showLegends={true}
-                            isDate={true}
-                            xDisplay={getDate}
-                        />
+                );
+            }else{
+                console.log("intraday");
+                return (
+                    <div>
+                        <div className="GraphWindowHeader">
+                            <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+                        </div>
+                        <h1>{this.state.name}</h1>
+                        <h3>Performance graph ({this.state.interval})</h3>
+                        <h3>{"Intraday"}</h3>
+                        <div className="GraphWindow">
+                            <LineChart
+                                width={800}
+                                height={400}
+                                xLabel={"Point"}
+                                yLabel={"Closing value (USD)"}
+                                data={this.state.data}
+                                hidePoints={true}
+                                pointRadius={0.5}
+                                showLegends={true}
+                                isDate={false}
+                                xDisplay={null}
+                            />
+                        </div>
+                        <div className="PerfGraphDatePicker">
+                            <span>Start date</span>
+                            <DatePicker
+                                selected={moment(this.state.startDate)}
+                                onChange={this.handleStartChange.bind(this)}
+                            />
+                            <span>End date</span>
+                            <DatePicker
+                                selected={moment(this.state.endDate)}
+                                onChange={this.handleEndChange.bind(this)}
+                            />
+                        </div>
                     </div>
-                    <div className="PerfGraphDatePicker">
-                        <span>Start date</span>
-                        <DatePicker
-                            selected={this.state.startDate}
-                            onChange={this.handleStartChange.bind(this)}
-                        />
-                        <span>End date</span>
-                        <DatePicker
-                            selected={this.state.endDate}
-                            onChange={this.handleEndChange.bind(this)}
-                        />
-                    </div>
-                </div>
-            );
+                );
+            }
         }else{
-            return (
-                <div>
-                    <div className="GraphWindowHeader">
-                        <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+            if(this.props.intervalType === "day"){
+                console.log("daily");
+                return (
+                    <div>
+                        <div className="GraphWindowHeader">
+                            <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+                        </div>
+                        <h1>{this.state.name}</h1>
+                        <h3>Performance graph ({this.state.interval})</h3>
+                        <h3>{"Daily"}</h3>
+                        <div className="GraphWindow">
+                            <LineChart
+                                width={800}
+                                height={400}
+                                xLabel={"Time"}
+                                yLabel={"Closing value (USD)"}
+                                data={this.state.data}
+                                hidePoints={true}
+                                pointRadius={0.5}
+                                showLegends={true}
+                                isDate={true}
+                                xDisplay={getDate}
+                            />
+                        </div>
                     </div>
-                    <h1>{this.state.name}</h1>
-                    <h3>Performance graph ({this.state.interval})</h3>
-                    <h3>{"Intraday"}</h3>
-                    <div className="GraphWindow">
-                        <LineChart
-                            width={800}
-                            height={400}
-                            xLabel={"Point"}
-                            yLabel={"Closing value (USD)"}
-                            data={this.state.data}
-                            hidePoints={true}
-                            pointRadius={0.5}
-                            showLegends={true}
-                            isDate={false}
-                            xDisplay={null}
-                        />
+                );
+            }else{
+                console.log("intraday");
+                return (
+                    <div>
+                        <div className="GraphWindowHeader">
+                            <Button function={this.closeGraph.bind(this)} className="CloseGraphButton" label="X"/>
+                        </div>
+                        <h1>{this.state.name}</h1>
+                        <h3>Performance graph ({this.state.interval})</h3>
+                        <h3>{"Intraday"}</h3>
+                        <div className="GraphWindow">
+                            <LineChart
+                                width={800}
+                                height={400}
+                                xLabel={"Point"}
+                                yLabel={"Closing value (USD)"}
+                                data={this.state.data}
+                                hidePoints={true}
+                                pointRadius={0.5}
+                                showLegends={true}
+                                isDate={false}
+                                xDisplay={null}
+                            />
+                        </div>
                     </div>
-                    <div className="PerfGraphDatePicker">
-                        <span>Start date</span>
-                        <DatePicker
-                            selected={moment(this.state.startDate)}
-                            onChange={this.handleStartChange.bind(this)}
-                        />
-                        <span>End date</span>
-                        <DatePicker
-                            selected={moment(this.state.endDate)}
-                            onChange={this.handleEndChange.bind(this)}
-                        />
-                    </div>
-                </div>
-            );
+                );
+            }
         }
+
 
 
     }
