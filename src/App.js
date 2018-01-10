@@ -658,8 +658,6 @@ class Portfolio extends Component {
 
     stockSpaceAvailable(symbol){
         if(this.state.jsStocks === undefined || Object.keys(this.state.jsStocks).length < MAX_STOCKS){
-            console.log("OK because MAX_STOCKS: ", MAX_STOCKS);
-            console.log("And length: ", Object.keys(this.state.jsStocks).length);
             let state = this.state;
             state.jsStocks = {};
             this.setState(state);
