@@ -1,4 +1,6 @@
 # 2017-web-development-project-Joelande94
+### Link to try it out is at the bottom
+
 1. Create a portfolio
     1. User can create a portfolio [Check]
     2. (s)he must enter the portfolio name [Check]
@@ -45,3 +47,6 @@ return(<tr>
 );
 ```
 and with the help of console prints I have been able to determine that the information for changing the currency does indeed take effect up until it's being rendered in the portfolio component. This means I create new `Stock`'s that contain the above shown render function and the correct values and I confirm that with a console.log before they are passed down into the render function of the portfolio AND INSIDE the render function. However, in the Stock render function I also console.log out the values of the ones that ARE in fact being drawn and they have the wrong values... 
+
+
+# [Finally, here's the link to the project to try it out](https://it-teaching-abo-akademi.github.io/2017-web-development-project-Joelande94)
